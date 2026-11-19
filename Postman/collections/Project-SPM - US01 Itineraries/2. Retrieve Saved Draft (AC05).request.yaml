@@ -1,0 +1,17 @@
+$kind: http-request
+url: '{{base_url}}/api/itineraries/{{created_itinerary_id}}'
+method: GET
+headers:
+  X-Editor-Id: editor-1
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test('Retrieved title matches', function () {
+          pm.expect(jsonData.title).to.eql('Castelli Romani Scenic Trail');
+      });
+    language: text/javascript
+order: 2000

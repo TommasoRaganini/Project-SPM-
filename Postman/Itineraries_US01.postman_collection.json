@@ -1,0 +1,197 @@
+{
+	"info": {
+		"_postman_id": "b1e69b50-32df-4c38-8c01-71fb2c6f1a89",
+		"name": "Project-SPM - US01 Itineraries",
+		"description": "Postman Collection for US01 (Create and retrieve draft thematic itinerary)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Create Draft Itinerary (Valid - AC01, AC02, AC03)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test('Status code is 201 Created', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"pm.test('Itinerary status is Draft', function () {",
+							"    pm.expect(jsonData.status).to.eql('Draft');",
+							"});",
+							"pm.test('Itinerary is not visible in public catalog', function () {",
+							"    pm.expect(jsonData.isVisibleInPublicCatalog).to.be.false;",
+							"});",
+							"if (jsonData.id) {",
+							"    pm.environment.set('created_itinerary_id', jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Castelli Romani Scenic Trail\",\n  \"theme\": \"History and Culture\",\n  \"description\": \"Journey through medieval villages, Renaissance villas, and volcanic lakes.\",\n  \"geographicalArea\": \"Lazio, Rome\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Retrieve Saved Draft (AC05)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test('Retrieved title matches', function () {",
+							"    pm.expect(jsonData.title).to.eql('Castelli Romani Scenic Trail');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{created_itinerary_id}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{created_itinerary_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Create Draft with Validation Errors (AC04 - Missing Fields)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 400 Bad Request', function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test('Contains validation errors', function () {",
+							"    pm.expect(jsonData.errors).to.be.an('array').that.is.not.empty;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"\",\n  \"theme\": \"\",\n  \"description\": \"Description without title or theme\",\n  \"geographicalArea\": \"Tuscany\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Public Catalog (AC02 - Drafts are excluded)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"var jsonData = pm.response.json();",
+							"pm.test('Draft itineraries do not appear in public catalog', function () {",
+							"    pm.expect(jsonData.length).to.eql(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/public-catalog",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"public-catalog"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

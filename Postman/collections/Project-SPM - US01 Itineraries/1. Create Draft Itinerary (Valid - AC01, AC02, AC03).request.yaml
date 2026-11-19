@@ -1,0 +1,33 @@
+$kind: http-request
+url: '{{base_url}}/api/itineraries'
+method: POST
+headers:
+  Content-Type: application/json
+  X-Editor-Id: editor-1
+body:
+  type: text
+  content: |-
+    {
+      "title": "Castelli Romani Scenic Trail",
+      "theme": "History and Culture",
+      "description": "Journey through medieval villages, Renaissance villas, and volcanic lakes.",
+      "geographicalArea": "Lazio, Rome"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var jsonData = pm.response.json();
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Itinerary status is Draft', function () {
+          pm.expect(jsonData.status).to.eql('Draft');
+      });
+      pm.test('Itinerary is not visible in public catalog', function () {
+          pm.expect(jsonData.isVisibleInPublicCatalog).to.be.false;
+      });
+      if (jsonData.id) {
+          pm.environment.set('created_itinerary_id', jsonData.id);
+      }
+    language: text/javascript
+order: 1000
