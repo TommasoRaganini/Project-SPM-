@@ -12,7 +12,8 @@ public record ItineraryResponse(
     string ResponsibleEditorId,
     string Status,
     bool IsVisibleInPublicCatalog,
-    DateTime CreatedAtUtc
+    DateTime CreatedAtUtc,
+    string ParticipationStatus
 )
 {
     public static ItineraryResponse FromEntity(Itinerary itinerary) => new(
@@ -24,7 +25,8 @@ public record ItineraryResponse(
         itinerary.ResponsibleEditorId,
         itinerary.Status.ToString(),
         itinerary.State.IsVisibleInPublicCatalog,
-        itinerary.CreatedAtUtc
+        itinerary.CreatedAtUtc,
+        itinerary.ParticipationStatus.ToString()
     );
 }
 

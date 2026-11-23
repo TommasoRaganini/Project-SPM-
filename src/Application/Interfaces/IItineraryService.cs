@@ -57,4 +57,10 @@ public interface IItineraryService
     Task<Result<IReadOnlyList<ItinerarySegmentResponse>>> GetSegmentsAsync(
         Guid itineraryId,
         CancellationToken cancellationToken = default);
+
+    // US04: Publication of itineraries
+    Task<Result<ItineraryResponse>> PublishItineraryAsync(
+        Guid id,
+        string authenticatedEditorId,
+        CancellationToken cancellationToken = default);
 }

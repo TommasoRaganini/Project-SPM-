@@ -1,0 +1,345 @@
+{
+  "info": {
+    "name": "Project-SPM - US04 Itinerary Publication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5207"
+    },
+    {
+      "key": "editorId",
+      "value": "editor-us04"
+    },
+    {
+      "key": "unauthorizedEditorId",
+      "value": "editor-intruder"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create Draft Itinerary",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Dolomites High Alpine Route\",\n  \"theme\": \"Nature & Mountains\",\n  \"description\": \"Scenic high-altitude itinerary across the Dolomites.\",\n  \"geographicalArea\": \"Trentino-Alto Adige, Italy\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"itineraryId\", jsonData.id);",
+              "pm.test(\"Initial status is Draft\", function () {",
+              "    pm.expect(jsonData.status).to.eql(\"Draft\");",
+              "    pm.expect(jsonData.isVisibleInPublicCatalog).to.eql(false);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Validation Failure - Publish without stops (AC01, AC05)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Reports missing stops prerequisite\", function () {",
+              "    pm.expect(jsonData.errors).to.include(\"An itinerary must have at least two fixed stops to be published.\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Add First Stop",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Tre Cime di Lavaredo\",\n  \"description\": \"Iconic alpine peak panorama\",\n  \"latitude\": 46.6186,\n  \"longitude\": 12.3028\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Validation Failure - Publish with 1 stop (AC01, AC05)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Reports requirement of at least 2 stops\", function () {",
+              "    pm.expect(jsonData.errors).to.include(\"An itinerary must have at least two fixed stops to be published.\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Add Second Stop",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Lago di Braies\",\n  \"description\": \"Alpine emerald lake\",\n  \"latitude\": 46.6946,\n  \"longitude\": 12.0854\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Unauthorized Editor - Publish attempt (AC05)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{unauthorizedEditorId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 403 Forbidden\", function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Confirm Publication (AC01, AC02, AC06)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Status transitioned to Published (AC02)\", function () {",
+              "    pm.expect(jsonData.status).to.eql(\"Published\");",
+              "    pm.expect(jsonData.isVisibleInPublicCatalog).to.eql(true);",
+              "});",
+              "pm.test(\"Participation remains Closed upon publication (AC06)\", function () {",
+              "    pm.expect(jsonData.participationStatus).to.eql(\"Closed\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Tourist Browses Public Catalog (AC03)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/public-catalog"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var list = pm.response.json();",
+              "var targetId = pm.collectionVariables.get(\"itineraryId\");",
+              "var found = list.some(item => item.id === targetId);",
+              "pm.test(\"Published itinerary is visible in public catalog (AC03)\", function () {",
+              "    pm.expect(found).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Tourist Views Stops in Route Order (AC04)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var stops = pm.response.json();",
+              "pm.test(\"Returns preserved stops in order (AC04)\", function () {",
+              "    pm.expect(stops.length).to.be.at.least(2);",
+              "    pm.expect(stops[0].name).to.eql(\"Tre Cime di Lavaredo\");",
+              "    pm.expect(stops[0].position).to.eql(1);",
+              "    pm.expect(stops[1].name).to.eql(\"Lago di Braies\");",
+              "    pm.expect(stops[1].position).to.eql(2);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Prevent Stop Modification on Published Itinerary (AC04)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Sassolungo\",\n  \"description\": \"Third stop attempted after publish\",\n  \"latitude\": 46.5292,\n  \"longitude\": 11.7397\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 400 Bad Request\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Modifying published itinerary stops is prohibited\", function () {",
+              "    pm.expect(jsonData.errors).to.include(\"Only draft itineraries can be modified.\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,29 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Dolomites High Alpine Route",
+      "theme": "Nature & Mountains",
+      "description": "Scenic high-altitude itinerary across the Dolomites.",
+      "geographicalArea": "Trentino-Alto Adige, Italy"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+      var jsonData = pm.response.json();
+      pm.collectionVariables.set("itineraryId", jsonData.id);
+      pm.test("Initial status is Draft", function () {
+          pm.expect(jsonData.status).to.eql("Draft");
+          pm.expect(jsonData.isVisibleInPublicCatalog).to.eql(false);
+      });
+    language: text/javascript
+order: 1000

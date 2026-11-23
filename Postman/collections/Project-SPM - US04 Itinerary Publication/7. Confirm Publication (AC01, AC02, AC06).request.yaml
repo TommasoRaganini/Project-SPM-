@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Status transitioned to Published (AC02)", function () {
+          pm.expect(jsonData.status).to.eql("Published");
+          pm.expect(jsonData.isVisibleInPublicCatalog).to.eql(true);
+      });
+      pm.test("Participation remains Closed upon publication (AC06)", function () {
+          pm.expect(jsonData.participationStatus).to.eql("Closed");
+      });
+    language: text/javascript
+order: 7000
