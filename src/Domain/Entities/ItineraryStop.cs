@@ -19,6 +19,8 @@ public class ItineraryStop
 
     public double Longitude { get; private set; }
 
+    public int Position { get; private set; }
+
     // Private constructor for EF Core materialization
     private ItineraryStop()
     {
@@ -100,6 +102,8 @@ public class ItineraryStop
 
         return Result<ItineraryStop>.Success(this);
     }
+
+    internal void SetPosition(int position) => Position = position;
 
     /// <summary>
     /// Associates the stop with an itinerary.

@@ -1,0 +1,31 @@
+$kind: http-request
+url: http://localhost:5207/api/itineraries/{{itinerary_id}}/stops
+method: POST
+headers:
+  Content-Type: application/json
+  X-Editor-Id: editor-1
+body:
+  type: text
+  content: |-
+    {
+      "name": "Piazza del Campo",
+      "description": "Historic town square of Siena famous for the Palio horse race.",
+      "latitude": 43.3188,
+      "longitude": 11.3308
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var jsonData = pm.response.json();
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test('Stop has valid coordinates', function () {
+          pm.expect(jsonData.latitude).to.eql(43.3188);
+          pm.expect(jsonData.longitude).to.eql(11.3308);
+      });
+      if (jsonData.id) {
+          pm.environment.set('created_stop_id', jsonData.id);
+      }
+    language: text/javascript
+order: 2000

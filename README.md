@@ -30,10 +30,11 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (61 automated tests)
+│   └── Domain.Tests/           # Unit and integration test suite (76 automated tests)
 └── Postman/
     ├── Itineraries_US01.postman_collection.json # Postman collection for US01
-    └── Itineraries_US02.postman_collection.json # Postman collection for US02
+    ├── Itineraries_US02.postman_collection.json # Postman collection for US02
+    └── Itineraries_US03.postman_collection.json # Postman collection for US03
 ```
 
 ### Key Patterns Applied
@@ -64,7 +65,7 @@ Execute the unit and domain tests:
 ```bash
 dotnet test ProjectSPM.sln
 ```
-*All 61 tests will execute and validate the acceptance criteria for US01 and US02.*
+*All 76 tests will execute and validate the acceptance criteria for US01, US02, and US03.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:
@@ -72,7 +73,7 @@ Start the ASP.NET Core Web API:
 dotnet run --project src/Api/Api.csproj --launch-profile "http"
 ```
 The API starts listening on **`http://localhost:5207`**.
-The database schema (`itineraries` and `itinerary_stops` tables) is created automatically on first run via `EnsureCreated()`.
+The database schema (`itineraries` and `itinerary_stops` tables) is migrated automatically on first run via `Migrate()`.
 
 ---
 
@@ -95,6 +96,12 @@ Collections located in the `Postman/` directory:
   3. **Update Stop**: Modifies existing stop data (verifies AC03).
   4. **Validation Failure (Coordinates Out of Range)**: Validates lat [-90, 90] / lon [-180, 180] (verifies AC04 and `400 Bad Request`).
   5. **Unauthorized Editor Modification**: Rejects non-owners (verifies AC05 and `403 Forbidden`).
+- **`Itineraries_US03.postman_collection.json`**:
+  1. **Create Draft and Add Three Stops**: Sets up the itinerary and verifies that each new stop is appended.
+  2. **Reorder Stops**: Saves a new sequence and checks that the stop data is preserved (verifies AC01 and AC05).
+  3. **Validation Failure (Duplicate Stop)**: Rejects a repeated stop ID (verifies AC03 and `400 Bad Request`).
+  4. **Read Saved Order**: Retrieves the saved sequence and verifies that the rejected request did not change it (verifies AC02, AC03 and AC05).
+  5. **Read Consecutive Segments**: Retrieves the segments in the new sequence (verifies AC04).
 
 ---
 
@@ -121,3 +128,14 @@ Collections located in the `Postman/` directory:
 | **AC03** | Editor can edit a stop's data and see changes after saving. | `PUT /api/itineraries/{id}/stops/{stopId}` updates and persists name, description, latitude, and longitude. |
 | **AC04** | System rejects coordinates outside valid ranges (lat: [-90, 90], lon: [-180, 180]). | Domain validation inside `ItineraryStop` rejects invalid/NaN coordinates and missing mandatory fields with `400 Bad Request`. |
 | **AC05** | Unauthorized editor cannot modify the itinerary's stops. | Authorization check `IsAuthorizedEditor` matches caller `X-Editor-Id` against `ResponsibleEditorId`; rejects with `403 Forbidden`. |
+
+### US03: Define and Modify the Order of Fixed Stops
+> *As an editor, I want to define and modify the order of an itinerary’s fixed stops, so that I can establish the sequence in which the places of interest are to be visited.*
+
+| Criterion | Description | Implementation Details |
+|---|---|---|
+| **AC01** | Editor can set an explicit sequence for fixed stops in a draft itinerary. | `PUT /api/itineraries/{id}/stops/order` accepts the ordered `stopIds` from the responsible editor. The State Pattern restricts changes to drafts. |
+| **AC02** | After reordering and saving, stops are displayed in the chosen order. | `GET /api/itineraries/{id}/stops` returns stops sorted by the persisted `Position`. |
+| **AC03** | The sequence cannot contain duplicates or references to stops outside the itinerary. | Domain validation requires every stop to appear exactly once. Invalid sequences return `400 Bad Request` and preserve the saved order. |
+| **AC04** | Segments are recalculated between consecutive stops. | `GET /api/itineraries/{id}/segments` derives each segment from a pair of consecutive stops in the saved order. |
+| **AC05** | Reordering preserves each stop’s descriptive and geographic data. | The reorder operation updates only `Position`. |

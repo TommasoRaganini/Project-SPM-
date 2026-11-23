@@ -69,7 +69,6 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.ItineraryStop", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Description")
@@ -90,6 +89,9 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

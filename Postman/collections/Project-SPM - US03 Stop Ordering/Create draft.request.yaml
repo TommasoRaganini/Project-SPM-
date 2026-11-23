@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "US03 test route",
+      "theme": "Nature",
+      "description": "Three fixed stops",
+      "geographicalArea": "Italy"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 201", () => pm.response.to.have.status(201));
+      pm.collectionVariables.set("itineraryId", pm.response.json().id);
+    language: text/javascript
+order: 1000

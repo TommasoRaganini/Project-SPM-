@@ -1,0 +1,23 @@
+$kind: http-request
+url: http://localhost:5207/api/itineraries/{{itinerary_id}}/stops
+method: POST
+headers:
+  Content-Type: application/json
+  X-Editor-Id: intruder-editor
+body:
+  type: text
+  content: |-
+    {
+      "name": "Unauthorized Stop Attempt",
+      "description": "Should be rejected with 403.",
+      "latitude": 43.3188,
+      "longitude": 11.3308
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 403 Forbidden', function () {
+          pm.response.to.have.status(403);
+      });
+    language: text/javascript
+order: 6000

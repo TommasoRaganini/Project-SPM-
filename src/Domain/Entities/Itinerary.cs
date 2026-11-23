@@ -107,6 +107,7 @@ public class Itinerary
 
         // Associate the stop with this itinerary
         result.Value!.SetItineraryId(Id);
+        result.Value.SetPosition(_stops.Count + 1);
 
         // Add the stop to the itinerary collection
         _stops.Add(result.Value);
@@ -141,6 +142,35 @@ public class Itinerary
             description,
             latitude,
             longitude);
+    }
+
+    public IEnumerable<ItineraryStop> GetOrderedStops() =>
+        _stops.OrderBy(stop => stop.Position).ThenBy(stop => stop.Id);
+
+    /// <summary>
+    /// Replaces the order of all fixed stops in a draft itinerary (US03 / AC01, AC03, AC05).
+    /// Validates the complete sequence before updating any positions.
+    /// </summary>
+    public Result<IReadOnlyList<ItineraryStop>> ReorderStops(IReadOnlyList<Guid> stopIds)
+    {
+        if (!State.CanEditStops)
+            return Result<IReadOnlyList<ItineraryStop>>.Failure(
+                "Only draft itineraries can be modified.");
+
+        var stopsById = _stops.ToDictionary(stop => stop.Id);
+        if (stopIds.Count != stopsById.Count ||
+            stopIds.Distinct().Count() != stopIds.Count ||
+            stopIds.Any(id => !stopsById.ContainsKey(id)))
+        {
+            return Result<IReadOnlyList<ItineraryStop>>.Failure(
+                "Specify every itinerary stop exactly once.");
+        }
+
+        var orderedStops = stopIds.Select(id => stopsById[id]).ToList();
+        for (var index = 0; index < orderedStops.Count; index++)
+            orderedStops[index].SetPosition(index + 1);
+
+        return Result<IReadOnlyList<ItineraryStop>>.Success(orderedStops);
     }
 
     public void TransitionTo(IItineraryState newState)

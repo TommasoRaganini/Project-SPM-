@@ -200,7 +200,7 @@ public class ItineraryService : IItineraryService
                 "Itinerary not found.");
         }
 
-        var stops = itinerary.Stops
+        var stops = itinerary.GetOrderedStops()
             .Select(MapStopToResponse)
             .ToList();
 
@@ -208,6 +208,53 @@ public class ItineraryService : IItineraryService
             stops);
     }
 
+
+    // ============================================================
+    // US03: ITINERARY STOP ORDERING
+    // ============================================================
+
+    /// <summary>
+    /// AC01, AC02, AC03, AC05: Validates and saves a new sequence for fixed stops.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<ItineraryStopResponse>>> ReorderStopsAsync(
+        Guid itineraryId,
+        ReorderItineraryStopsRequest request,
+        string authenticatedEditorId,
+        CancellationToken cancellationToken = default)
+    {
+        var itinerary = await _repository.GetByIdAsync(itineraryId, cancellationToken);
+        if (itinerary == null)
+            return Result<IReadOnlyList<ItineraryStopResponse>>.Failure("Itinerary not found.");
+
+        if (!IsAuthorizedEditor(itinerary, authenticatedEditorId))
+            return Result<IReadOnlyList<ItineraryStopResponse>>.Failure(
+                "You are not authorized to modify this itinerary.");
+
+        var result = itinerary.ReorderStops(request.StopIds);
+        if (result.IsFailure)
+            return Result<IReadOnlyList<ItineraryStopResponse>>.Failure(result.Errors);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+        return Result<IReadOnlyList<ItineraryStopResponse>>.Success(
+            result.Value!.Select(MapStopToResponse).ToList());
+    }
+
+    /// <summary>
+    /// AC04: Derives the itinerary segments from the saved stop order.
+    /// </summary>
+    public async Task<Result<IReadOnlyList<ItinerarySegmentResponse>>> GetSegmentsAsync(
+        Guid itineraryId,
+        CancellationToken cancellationToken = default)
+    {
+        var itinerary = await _repository.GetByIdAsync(itineraryId, cancellationToken);
+        if (itinerary == null)
+            return Result<IReadOnlyList<ItinerarySegmentResponse>>.Failure("Itinerary not found.");
+
+        var stops = itinerary.GetOrderedStops().ToList();
+        var segments = stops.Zip(stops.Skip(1),
+            (from, to) => new ItinerarySegmentResponse(from.Id, to.Id)).ToList();
+        return Result<IReadOnlyList<ItinerarySegmentResponse>>.Success(segments);
+    }
 
     // ============================================================
     // PRIVATE HELPER METHODS
@@ -242,7 +289,8 @@ public class ItineraryService : IItineraryService
             Name = stop.Name,
             Description = stop.Description,
             Latitude = stop.Latitude,
-            Longitude = stop.Longitude
+            Longitude = stop.Longitude,
+            Position = stop.Position
         };
     }
 }

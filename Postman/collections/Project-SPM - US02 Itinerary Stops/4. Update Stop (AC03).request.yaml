@@ -1,0 +1,27 @@
+$kind: http-request
+url: http://localhost:5207/api/itineraries/{{itinerary_id}}/stops/{{created_stop_id}}
+method: PUT
+headers:
+  Content-Type: application/json
+  X-Editor-Id: editor-1
+body:
+  type: text
+  content: |-
+    {
+      "name": "Piazza del Campo (Updated)",
+      "description": "Updated description with historical details.",
+      "latitude": 43.3188,
+      "longitude": 11.3308
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var jsonData = pm.response.json();
+      pm.test('Status code is 200 OK', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Stop name and details are updated', function () {
+          pm.expect(jsonData.name).to.eql('Piazza del Campo (Updated)');
+      });
+    language: text/javascript
+order: 4000

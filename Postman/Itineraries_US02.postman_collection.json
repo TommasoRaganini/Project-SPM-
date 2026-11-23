@@ -5,6 +5,16 @@
 		"description": "Postman Collection for US02 (Add and edit geolocated fixed stops of an itinerary)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
+	"variable": [
+		{
+			"key": "itinerary_id",
+			"value": ""
+		},
+		{
+			"key": "created_stop_id",
+			"value": ""
+		}
+	],
 	"item": [
 		{
 			"name": "1. Create Draft Itinerary (Prerequisite)",
@@ -19,6 +29,7 @@
 							"});",
 							"if (jsonData.id) {",
 							"    pm.environment.set('itinerary_id', jsonData.id);",
+							"    pm.collectionVariables.set('itinerary_id', jsonData.id);",
 							"}"
 						],
 						"type": "text/javascript"
@@ -72,6 +83,7 @@
 							"});",
 							"if (jsonData.id) {",
 							"    pm.environment.set('created_stop_id', jsonData.id);",
+							"    pm.collectionVariables.set('created_stop_id', jsonData.id);",
 							"}"
 						],
 						"type": "text/javascript"

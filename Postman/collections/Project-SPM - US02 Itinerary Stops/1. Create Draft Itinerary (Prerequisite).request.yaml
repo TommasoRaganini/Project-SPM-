@@ -1,0 +1,27 @@
+$kind: http-request
+url: http://localhost:5207/api/itineraries
+method: POST
+headers:
+  Content-Type: application/json
+  X-Editor-Id: editor-1
+body:
+  type: text
+  content: |-
+    {
+      "title": "Tuscan Heritage Route",
+      "theme": "History",
+      "description": "Exploring central Tuscany medieval routes.",
+      "geographicalArea": "Tuscany, Siena"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      var jsonData = pm.response.json();
+      pm.test('Status code is 201 Created', function () {
+          pm.response.to.have.status(201);
+      });
+      if (jsonData.id) {
+          pm.environment.set('itinerary_id', jsonData.id);
+      }
+    language: text/javascript
+order: 1000
