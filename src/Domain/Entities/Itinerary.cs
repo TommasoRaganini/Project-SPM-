@@ -1,3 +1,4 @@
+
 using Domain.Common;
 using Domain.States;
 
@@ -17,6 +18,11 @@ public class Itinerary
     private IItineraryState _state = null!;
     public IItineraryState State => _state ??= CreateState(Status);
 
+    // Collection of fixed stops belonging to the itinerary
+    private readonly List<ItineraryStop> _stops = new();
+
+    public IReadOnlyCollection<ItineraryStop> Stops => _stops.AsReadOnly();
+
     // Private constructor for EF Core materialization
     private Itinerary()
     {
@@ -34,7 +40,8 @@ public class Itinerary
     {
         var errors = new List<string>();
 
-        // AC04: If a required field is missing or invalid, the system reports the issue and does not save
+        // AC04: If a required field is missing or invalid,
+        // the system reports the issue and does not save.
         if (string.IsNullOrWhiteSpace(title))
             errors.Add("Title is required.");
 
@@ -61,8 +68,10 @@ public class Itinerary
             Theme = theme!.Trim(),
             Description = description!.Trim(),
             GeographicalArea = geographicalArea!.Trim(),
+
             // AC03: System records the responsible editor
             ResponsibleEditorId = responsibleEditorId!.Trim(),
+
             CreatedAtUtc = DateTime.UtcNow
         };
 
@@ -70,6 +79,68 @@ public class Itinerary
         itinerary.TransitionTo(new DraftState());
 
         return Result<Itinerary>.Success(itinerary);
+    }
+
+    /// <summary>
+    /// Adds a new fixed stop to the itinerary.
+    /// Only draft itineraries can be modified (governed by the State pattern).
+    /// </summary>
+    public Result<ItineraryStop> AddStop(
+        string? name,
+        string? description,
+        double latitude,
+        double longitude)
+    {
+        if (!State.CanEditStops)
+            return Result<ItineraryStop>.Failure(
+                "Only draft itineraries can be modified.");
+
+        // Create and validate the new stop
+        var result = ItineraryStop.Create(
+            name,
+            description,
+            latitude,
+            longitude);
+
+        if (result.IsFailure)
+            return result;
+
+        // Associate the stop with this itinerary
+        result.Value!.SetItineraryId(Id);
+
+        // Add the stop to the itinerary collection
+        _stops.Add(result.Value);
+
+        return Result<ItineraryStop>.Success(result.Value);
+    }
+
+    /// <summary>
+    /// Updates an existing stop belonging to this itinerary.
+    /// Only draft itineraries can be modified (governed by the State pattern).
+    /// </summary>
+    public Result<ItineraryStop> UpdateStop(
+        Guid stopId,
+        string? name,
+        string? description,
+        double latitude,
+        double longitude)
+    {
+        if (!State.CanEditStops)
+            return Result<ItineraryStop>.Failure(
+                "Only draft itineraries can be modified.");
+
+        // Find the stop inside this itinerary
+        var stop = _stops.FirstOrDefault(s => s.Id == stopId);
+
+        if (stop == null)
+            return Result<ItineraryStop>.Failure("Stop not found.");
+
+        // Update and validate stop details
+        return stop.Update(
+            name,
+            description,
+            latitude,
+            longitude);
     }
 
     public void TransitionTo(IItineraryState newState)

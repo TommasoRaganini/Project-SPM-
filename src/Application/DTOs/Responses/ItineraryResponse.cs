@@ -1,7 +1,7 @@
 using Domain.Entities;
 using Domain.States;
 
-namespace Application.DTOs;
+namespace Application.DTOs.Responses;
 
 public record ItineraryResponse(
     Guid Id,

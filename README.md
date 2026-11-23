@@ -30,9 +30,10 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (18 automated tests)
+│   └── Domain.Tests/           # Unit and integration test suite (61 automated tests)
 └── Postman/
-    └── Itineraries_US01.postman_collection.json # Ready-to-import Postman collection
+    ├── Itineraries_US01.postman_collection.json # Postman collection for US01
+    └── Itineraries_US02.postman_collection.json # Postman collection for US02
 ```
 
 ### Key Patterns Applied
@@ -61,9 +62,9 @@ The database will be initialized on port `5432` with credentials:
 ### 2. Run the Automated Test Suite
 Execute the unit and domain tests:
 ```bash
-dotnet test
+dotnet test ProjectSPM.sln
 ```
-*All 18 tests will execute and validate the acceptance criteria.*
+*All 61 tests will execute and validate the acceptance criteria for US01 and US02.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:
@@ -71,7 +72,7 @@ Start the ASP.NET Core Web API:
 dotnet run --project src/Api/Api.csproj --launch-profile "http"
 ```
 The API starts listening on **`http://localhost:5207`**.
-The database schema (`itineraries` table) is created automatically on first run via `EnsureCreated()`.
+The database schema (`itineraries` and `itinerary_stops` tables) is created automatically on first run via `EnsureCreated()`.
 
 ---
 
@@ -81,12 +82,19 @@ The database schema (`itineraries` table) is created automatically on first run 
 Open your browser and navigate to:
 **[http://localhost:5207/swagger](http://localhost:5207/swagger)**
 
-### Option B: Postman Collection
-Import the collection located in `Postman/Itineraries_US01.postman_collection.json`:
-1. **Create Draft Itinerary**: Sends valid payload with `X-Editor-Id` header (auto-saves ID as a variable).
-2. **Reopen Saved Draft**: Retrieves the saved draft by ID (verifies AC05).
-3. **Validation Failure (Missing Fields)**: Tests missing mandatory fields (verifies AC04 and `400 Bad Request`).
-4. **Public Catalog**: Verifies that drafts do not appear in public listings (verifies AC02).
+### Option B: Postman Collections
+Collections located in the `Postman/` directory:
+- **`Itineraries_US01.postman_collection.json`**:
+  1. **Create Draft Itinerary**: Sends valid payload with `X-Editor-Id` header (auto-saves ID as a variable).
+  2. **Reopen Saved Draft**: Retrieves the saved draft by ID (verifies AC05).
+  3. **Validation Failure (Missing Fields)**: Tests missing mandatory fields (verifies AC04 and `400 Bad Request`).
+  4. **Public Catalog**: Verifies that drafts do not appear in public listings (verifies AC02).
+- **`Itineraries_US02.postman_collection.json`**:
+  1. **Add Stop to Draft**: Adds geolocated stop (verifies AC01, AC02 and `201 Created`).
+  2. **Get Itinerary Stops**: Retrieves all fixed stops for map visualization (verifies AC02).
+  3. **Update Stop**: Modifies existing stop data (verifies AC03).
+  4. **Validation Failure (Coordinates Out of Range)**: Validates lat [-90, 90] / lon [-180, 180] (verifies AC04 and `400 Bad Request`).
+  5. **Unauthorized Editor Modification**: Rejects non-owners (verifies AC05 and `403 Forbidden`).
 
 ---
 
@@ -102,3 +110,14 @@ Import the collection located in `Postman/Itineraries_US01.postman_collection.js
 | **AC03** | System assigns a unique identifier and records responsible editor. | Generates a unique `Guid` and sets `ResponsibleEditorId`. |
 | **AC04** | If a mandatory field is missing or invalid, system rejects and does not persist. | Validates all required inputs; returns `400 Bad Request` with exact validation messages without touching the DB. |
 | **AC05** | Editor can reopen the draft and retrieve previously saved data. | `GET /api/itineraries/{id}` reconstructs and returns all previously stored itinerary data from PostgreSQL. |
+
+### US02: Add and Edit Geolocated Fixed Stops
+> *As an editor, I want to add and edit the geolocated fixed stops of an itinerary, so that I can identify the places of interest that make up the route.*
+
+| Criterion | Description | Implementation Details |
+|---|---|---|
+| **AC01** | For a draft itinerary, editor adds a stop specifying name, description, and coordinates. | `POST /api/itineraries/{id}/stops` creates and attaches `ItineraryStop` to draft itinerary. State pattern prevents modification in non-draft states. |
+| **AC02** | Added stop appears in the itinerary's stops list and map representation. | `GET /api/itineraries/{id}/stops` returns all stops with coordinates for map display and list views. |
+| **AC03** | Editor can edit a stop's data and see changes after saving. | `PUT /api/itineraries/{id}/stops/{stopId}` updates and persists name, description, latitude, and longitude. |
+| **AC04** | System rejects coordinates outside valid ranges (lat: [-90, 90], lon: [-180, 180]). | Domain validation inside `ItineraryStop` rejects invalid/NaN coordinates and missing mandatory fields with `400 Bad Request`. |
+| **AC05** | Unauthorized editor cannot modify the itinerary's stops. | Authorization check `IsAuthorizedEditor` matches caller `X-Editor-Id` against `ResponsibleEditorId`; rejects with `403 Forbidden`. |

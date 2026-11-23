@@ -1,3 +1,4 @@
+
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -40,7 +41,20 @@ public class ItineraryConfiguration : IEntityTypeConfiguration<Itinerary>
             .HasMaxLength(50)
             .IsRequired();
 
-        // The State Pattern is managed in-memory as behavior and ignored for direct column mapping
+        // State Pattern is managed in-memory
         builder.Ignore(x => x.State);
+
+        // One-to-Many relationship:
+        // One itinerary can have multiple fixed stops
+        builder.HasMany(x => x.Stops)
+            .WithOne()
+            .HasForeignKey(s => s.ItineraryId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Configure the backing field
+        builder.Navigation(x => x.Stops)
+            .HasField("_stops")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
