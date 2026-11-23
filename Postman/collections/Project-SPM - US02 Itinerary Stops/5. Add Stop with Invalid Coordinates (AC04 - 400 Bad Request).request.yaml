@@ -1,0 +1,23 @@
+$kind: http-request
+url: http://localhost:5207/api/itineraries/{{itinerary_id}}/stops
+method: POST
+headers:
+  Content-Type: application/json
+  X-Editor-Id: editor-1
+body:
+  type: text
+  content: |-
+    {
+      "name": "Invalid Coordinates Stop",
+      "description": "Testing coordinate validation.",
+      "latitude": 95.0,
+      "longitude": 11.3308
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status code is 400 Bad Request', function () {
+          pm.response.to.have.status(400);
+      });
+    language: text/javascript
+order: 5000

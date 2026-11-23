@@ -30,10 +30,11 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (61 automated tests)
+│   └── Domain.Tests/           # Unit and integration test suite (76 automated tests)
 └── Postman/
     ├── Itineraries_US01.postman_collection.json # Postman collection for US01
-    └── Itineraries_US02.postman_collection.json # Postman collection for US02
+    ├── Itineraries_US02.postman_collection.json # Postman collection for US02
+    └── Itineraries_US03.postman_collection.json # Postman collection for US03
 ```
 
 ### Key Patterns Applied
@@ -64,7 +65,7 @@ Execute the unit and domain tests:
 ```bash
 dotnet test ProjectSPM.sln
 ```
-*All 61 tests will execute and validate the acceptance criteria for US01 and US02.*
+*All 76 tests will execute and validate the acceptance criteria for US01, US02, and US03.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:
@@ -72,7 +73,7 @@ Start the ASP.NET Core Web API:
 dotnet run --project src/Api/Api.csproj --launch-profile "http"
 ```
 The API starts listening on **`http://localhost:5207`**.
-The database schema (`itineraries` and `itinerary_stops` tables) is created automatically on first run via `EnsureCreated()`.
+The database schema (`itineraries` and `itinerary_stops` tables) is migrated automatically on first run via `Migrate()`.
 
 ---
 

@@ -64,6 +64,25 @@ public class US03_ItineraryStopOrderingDomainTests
         itinerary.GetOrderedStops().Should().Equal(first, second);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void AC01_ReorderStops_WithSmallNumberOfStops_ShouldSucceed(int stopCount)
+    {
+        var itinerary = CreateDraft();
+        var stopIds = new List<Guid>();
+        if (stopCount == 1)
+        {
+            var stop = itinerary.AddStop("Only", "Description", 41, 12).Value!;
+            stopIds.Add(stop.Id);
+        }
+
+        var result = itinerary.ReorderStops(stopIds);
+
+        result.IsSuccess.Should().BeTrue();
+        itinerary.GetOrderedStops().Count().Should().Be(stopCount);
+    }
+
     private static Itinerary CreateDraft() =>
         Itinerary.CreateDraft("Route", "Nature", "A trail", "Italy", "editor-alpha").Value!;
 }

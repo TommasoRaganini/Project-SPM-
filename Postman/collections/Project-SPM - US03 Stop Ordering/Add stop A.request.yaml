@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Stop A",
+      "description": "Description A",
+      "latitude": 41,
+      "longitude": 11
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 201", () => pm.response.to.have.status(201));
+      pm.test("Appended at position 1", () => pm.expect(pm.response.json().position).to.eql(1));
+      pm.collectionVariables.set("stopA", pm.response.json().id);
+      const { position, ...details } = pm.response.json();
+      pm.collectionVariables.set("detailsA", JSON.stringify(details));
+    language: text/javascript
+order: 2000

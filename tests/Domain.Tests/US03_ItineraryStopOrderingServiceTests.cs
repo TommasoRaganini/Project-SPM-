@@ -44,6 +44,45 @@ public class US03_ItineraryStopOrderingServiceTests
         itinerary.GetOrderedStops().Select(stop => stop.Id).Should().Equal(originalOrder);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public async Task AC04_GetSegmentsAsync_WithLessThanTwoStops_ShouldReturnEmptySegmentsList(int stopCount)
+    {
+        var repository = new InMemoryItineraryRepository();
+        var itinerary = Itinerary.CreateDraft("Route", "Nature", "A trail", "Italy", "editor-alpha").Value!;
+        if (stopCount == 1)
+        {
+            itinerary.AddStop("First", "First description", 41, 12);
+        }
+        await repository.AddAsync(itinerary);
+        var service = new ItineraryService(repository);
+
+        var segments = await service.GetSegmentsAsync(itinerary.Id);
+
+        segments.IsSuccess.Should().BeTrue();
+        segments.Value.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("reorder")]
+    [InlineData("segments")]
+    public async Task ServiceOperations_WhenItineraryNotFound_ShouldReturnFailure(string operation)
+    {
+        var repository = new InMemoryItineraryRepository();
+        var service = new ItineraryService(repository);
+        var missingId = Guid.NewGuid();
+
+        var errors = operation switch
+        {
+            "reorder" => (await service.ReorderStopsAsync(missingId, new(new[] { Guid.NewGuid() }), "editor-alpha")).Errors,
+            _ => (await service.GetSegmentsAsync(missingId)).Errors
+        };
+
+        errors.Should().Contain("Itinerary not found.");
+        repository.SaveCount.Should().Be(0);
+    }
+
     private static async Task<(ItineraryService, InMemoryItineraryRepository, Itinerary)> CreateSetupAsync()
     {
         var repository = new InMemoryItineraryRepository();

@@ -27,17 +27,17 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Tourist Itinerary Management System API",
         Version = "v1",
-        Description = "REST API for thematic tourist itinerary management (US01 - Draft itinerary creation)"
+        Description = "REST API for thematic tourist itinerary management (US01 - US03)"
     });
 });
 
 var app = builder.Build();
 
-// Automatic database and table creation at startup
+// Automatic database migration at startup
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 // Enable Swagger in development

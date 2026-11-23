@@ -178,8 +178,13 @@ public class US02_ItineraryServiceStopsTests
         result.Errors.Should().Contain("Stop not found.");
     }
 
-    [Fact]
-    public async Task AC04_AddStopAsync_WithInvalidCoordinates_ShouldFailAndNotPersist()
+    [Theory]
+    [InlineData(120.0, 14.0, "Latitude must be between -90 and 90.")]
+    [InlineData(40.0, 200.0, "Longitude must be between -180 and 180.")]
+    public async Task AC04_AddStopAsync_WithInvalidCoordinates_ShouldFailAndNotPersist(
+        double latitude,
+        double longitude,
+        string expectedError)
     {
         // Arrange
         var (service, repo, itinerary) = CreateSetup("editor-alpha");
@@ -187,8 +192,8 @@ public class US02_ItineraryServiceStopsTests
         {
             Name = "Invalid Coordinates Stop",
             Description = "Valid Description",
-            Latitude = 120.0, // Invalid latitude (> 90)
-            Longitude = 14.0
+            Latitude = latitude,
+            Longitude = longitude
         };
 
         // Act
@@ -196,7 +201,7 @@ public class US02_ItineraryServiceStopsTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Errors.Should().Contain("Latitude must be between -90 and 90.");
+        result.Errors.Should().Contain(expectedError);
         repo.Items.First(i => i.Id == itinerary.Id).Stops.Should().BeEmpty();
     }
 
