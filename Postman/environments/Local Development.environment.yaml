@@ -6,3 +6,5 @@ values:
     value: ''
   - key: itinerary_id
     value: ''
+  - key: created_stop_id
+    value: ''
