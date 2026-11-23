@@ -1,0 +1,279 @@
+{
+  "info": {
+    "name": "Project-SPM - US03 Stop Ordering",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5207"
+    },
+    {
+      "key": "editorId",
+      "value": "editor-us03"
+    }
+  ],
+  "item": [
+    {
+      "name": "Create draft",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"US03 test route\",\n  \"theme\": \"Nature\",\n  \"description\": \"Three fixed stops\",\n  \"geographicalArea\": \"Italy\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.collectionVariables.set(\"itineraryId\", pm.response.json().id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add stop A",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Stop A\",\n  \"description\": \"Description A\",\n  \"latitude\": 41,\n  \"longitude\": 11\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Appended at position 1\", () => pm.expect(pm.response.json().position).to.eql(1));",
+              "pm.collectionVariables.set(\"stopA\", pm.response.json().id);",
+              "const { position, ...details } = pm.response.json();",
+              "pm.collectionVariables.set(\"detailsA\", JSON.stringify(details));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add stop B",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Stop B\",\n  \"description\": \"Description B\",\n  \"latitude\": 42,\n  \"longitude\": 12\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Appended at position 2\", () => pm.expect(pm.response.json().position).to.eql(2));",
+              "pm.collectionVariables.set(\"stopB\", pm.response.json().id);",
+              "const { position, ...details } = pm.response.json();",
+              "pm.collectionVariables.set(\"detailsB\", JSON.stringify(details));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add stop C",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Stop C\",\n  \"description\": \"Description C\",\n  \"latitude\": 43,\n  \"longitude\": 13\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+              "pm.test(\"Appended at position 3\", () => pm.expect(pm.response.json().position).to.eql(3));",
+              "pm.collectionVariables.set(\"stopC\", pm.response.json().id);",
+              "const { position, ...details } = pm.response.json();",
+              "pm.collectionVariables.set(\"detailsC\", JSON.stringify(details));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reorder stops (AC01, AC05)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops/order",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stopIds\": [\n    \"{{stopA}}\",\n    \"{{stopC}}\",\n    \"{{stopB}}\"\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const ids = [\"stopA\", \"stopC\", \"stopB\"].map(key => pm.collectionVariables.get(key));",
+              "pm.test(\"Stops are in order A, C, B\", () => pm.expect(pm.response.json().map(stop => stop.id)).to.eql(ids));",
+              "pm.test(\"Stop data is preserved\", () => {",
+              "    const original = [\"A\", \"C\", \"B\"].map(key => JSON.parse(pm.collectionVariables.get(\"details\" + key)));",
+              "    const actual = pm.response.json().map(({ position, ...details }) => details);",
+              "    pm.expect(actual).to.eql(original);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reject duplicate stop (AC03)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops/order",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stopIds\": [\n    \"{{stopA}}\",\n    \"{{stopA}}\",\n    \"{{stopB}}\"\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read saved order (AC02, AC03, AC05)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const ids = [\"stopA\", \"stopC\", \"stopB\"].map(key => pm.collectionVariables.get(key));",
+              "pm.test(\"Stops are in order A, C, B\", () => pm.expect(pm.response.json().map(stop => stop.id)).to.eql(ids));",
+              "pm.test(\"Stop data is preserved\", () => {",
+              "    const original = [\"A\", \"C\", \"B\"].map(key => JSON.parse(pm.collectionVariables.get(\"details\" + key)));",
+              "    const actual = pm.response.json().map(({ position, ...details }) => details);",
+              "    pm.expect(actual).to.eql(original);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Read consecutive segments (AC04)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/segments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+              "const [a, c, b] = [\"stopA\", \"stopC\", \"stopB\"].map(key => pm.collectionVariables.get(key));",
+              "pm.test(\"Segments are A to C and C to B\", () => pm.expect(pm.response.json()).to.eql([",
+              "    { fromStopId: a, toStopId: c }, { fromStopId: c, toStopId: b }",
+              "]));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

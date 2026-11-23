@@ -29,6 +29,9 @@ public class ItineraryStopConfiguration : IEntityTypeConfiguration<ItineraryStop
         builder.Property(x => x.Longitude)
             .IsRequired();
 
+        builder.Property(x => x.Position)
+            .IsRequired();
+
         builder.Property(x => x.ItineraryId)
             .IsRequired();
     }

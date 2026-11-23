@@ -43,4 +43,18 @@ public interface IItineraryService
     Task<Result<IEnumerable<ItineraryStopResponse>>> GetStopsAsync(
         Guid itineraryId,
         CancellationToken cancellationToken = default);
+
+    // US03: Itinerary stop ordering
+
+    // AC01, AC02, AC03, AC05: Replace the order of fixed stops.
+    Task<Result<IReadOnlyList<ItineraryStopResponse>>> ReorderStopsAsync(
+        Guid itineraryId,
+        ReorderItineraryStopsRequest request,
+        string authenticatedEditorId,
+        CancellationToken cancellationToken = default);
+
+    // AC04: Retrieve segments between consecutive stops.
+    Task<Result<IReadOnlyList<ItinerarySegmentResponse>>> GetSegmentsAsync(
+        Guid itineraryId,
+        CancellationToken cancellationToken = default);
 }

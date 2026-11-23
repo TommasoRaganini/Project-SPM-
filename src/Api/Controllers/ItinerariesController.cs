@@ -207,4 +207,56 @@ public class ItinerariesController : ControllerBase
 
         return Ok(result.Value);
     }
+
+    /// <summary>
+    /// US03: Replaces the order of all fixed stops in a draft itinerary.
+    /// AC01: The responsible editor supplies the complete sequence.
+    /// AC02: The updated order is saved and returned.
+    /// AC03: Duplicate, missing and foreign stops are rejected.
+    /// AC05: Stop details and coordinates are preserved.
+    /// </summary>
+    [HttpPut("{id:guid}/stops/order")]
+    [ProducesResponseType(typeof(IReadOnlyList<ItineraryStopResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReorderStops(
+        [FromRoute] Guid id,
+        [FromBody] ReorderItineraryStopsRequest request,
+        [FromHeader(Name = "X-Editor-Id")] string? editorId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _itineraryService.ReorderStopsAsync(
+            id, request, editorId ?? string.Empty, cancellationToken);
+
+        if (result.IsSuccess)
+            return Ok(result.Value);
+
+        var error = result.Errors.FirstOrDefault();
+        if (error == "Itinerary not found.")
+            return NotFound(new { error });
+
+        if (error == "You are not authorized to modify this itinerary.")
+            return StatusCode(StatusCodes.Status403Forbidden, new { error });
+
+        return BadRequest(new { errors = result.Errors });
+    }
+
+    /// <summary>
+    /// US03: Retrieves the segments of an itinerary.
+    /// AC04: Each segment connects two consecutive stops in the saved order.
+    /// </summary>
+    [HttpGet("{id:guid}/segments")]
+    [ProducesResponseType(typeof(IReadOnlyList<ItinerarySegmentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSegments(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _itineraryService.GetSegmentsAsync(id, cancellationToken);
+        if (result.IsFailure)
+            return NotFound(new { error = result.Errors.FirstOrDefault() });
+
+        return Ok(result.Value);
+    }
 }
