@@ -1,9 +1,11 @@
-﻿
-using Domain.Common;
+﻿using Domain.Common;
 
 namespace Domain.Entities;
 
-public class ItineraryStop //rappresenta la Tappa fissa 
+/// <summary>
+/// Represents a geolocated fixed stop belonging to an itinerary.
+/// </summary>
+public class ItineraryStop
 {
     public Guid Id { get; private set; }
 
@@ -22,9 +24,10 @@ public class ItineraryStop //rappresenta la Tappa fissa
     {
     }
 
-    
-    /// Creates a new geolocated stop.
-
+    /// <summary>
+    /// Creates a new geolocated fixed stop.
+    /// Validates required fields and coordinate ranges (-90 to 90 lat, -180 to 180 lon).
+    /// </summary>
     public static Result<ItineraryStop> Create(
         string? name,
         string? description,
@@ -62,9 +65,9 @@ public class ItineraryStop //rappresenta la Tappa fissa
         return Result<ItineraryStop>.Success(stop);
     }
 
-
-    /// Updates the stop details.
-   
+    /// <summary>
+    /// Updates the stop details with validation.
+    /// </summary>
     public Result<ItineraryStop> Update(
         string? name,
         string? description,
@@ -90,7 +93,7 @@ public class ItineraryStop //rappresenta la Tappa fissa
         if (errors.Count > 0)
             return Result<ItineraryStop>.Failure(errors);
 
-        Name = name!.Trim(); // trim significa quello che digiti 
+        Name = name!.Trim();
         Description = description!.Trim();
         Latitude = latitude;
         Longitude = longitude;
@@ -98,9 +101,9 @@ public class ItineraryStop //rappresenta la Tappa fissa
         return Result<ItineraryStop>.Success(this);
     }
 
-    
+    /// <summary>
     /// Associates the stop with an itinerary.
-
+    /// </summary>
     internal void SetItineraryId(Guid itineraryId)
     {
         ItineraryId = itineraryId;

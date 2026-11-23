@@ -91,12 +91,10 @@ public class ItinerariesController : ControllerBase
         return Ok(catalog);
     }
 
-    // ============================================================
-    // ITINERARY STOPS - NEW USER STORY
-    // ============================================================
+
 
     /// <summary>
-    /// US: Adds a new geolocated fixed stop to a draft itinerary.
+    /// US02: Adds a new geolocated fixed stop to a draft itinerary.
     /// AC01: Name, description and geographical coordinates are required.
     /// AC04: Coordinates must be within valid geographical ranges.
     /// AC05: Only the responsible editor can modify itinerary stops.
@@ -140,7 +138,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US: Updates an existing geolocated fixed stop.
+    /// US02: Updates an existing geolocated fixed stop.
     /// AC03: Changes are saved and returned.
     /// AC04: Coordinates must be within valid geographical ranges.
     /// AC05: Only the responsible editor can modify itinerary stops.
@@ -186,7 +184,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US: Retrieves all fixed stops belonging to an itinerary.
+    /// US02: Retrieves all fixed stops belonging to an itinerary.
     /// AC02: Returns the itinerary stops for visualization on the map.
     /// </summary>
     [HttpGet("{id:guid}/stops")]

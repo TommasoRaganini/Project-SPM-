@@ -1,0 +1,299 @@
+{
+	"info": {
+		"_postman_id": "c2e78b61-43ef-4d49-9d12-82ec3d7f2b90",
+		"name": "Project-SPM - US02 Itinerary Stops",
+		"description": "Postman Collection for US02 (Add and edit geolocated fixed stops of an itinerary)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Create Draft Itinerary (Prerequisite)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test('Status code is 201 Created', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"if (jsonData.id) {",
+							"    pm.environment.set('itinerary_id', jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Tuscan Heritage Route\",\n  \"theme\": \"History\",\n  \"description\": \"Exploring central Tuscany medieval routes.\",\n  \"geographicalArea\": \"Tuscany, Siena\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. Add Stop to Draft (AC01, AC02)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test('Status code is 201 Created', function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"pm.test('Stop has valid coordinates', function () {",
+							"    pm.expect(jsonData.latitude).to.eql(43.3188);",
+							"    pm.expect(jsonData.longitude).to.eql(11.3308);",
+							"});",
+							"if (jsonData.id) {",
+							"    pm.environment.set('created_stop_id', jsonData.id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Piazza del Campo\",\n  \"description\": \"Historic town square of Siena famous for the Palio horse race.\",\n  \"latitude\": 43.3188,\n  \"longitude\": 11.3308\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{itinerary_id}}/stops",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{itinerary_id}}",
+						"stops"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. Get Itinerary Stops (AC02)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test('Stops collection is not empty', function () {",
+							"    pm.expect(jsonData.length).to.be.above(0);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{itinerary_id}}/stops",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{itinerary_id}}",
+						"stops"
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Update Stop (AC03)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.test('Status code is 200 OK', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test('Stop name and details are updated', function () {",
+							"    pm.expect(jsonData.name).to.eql('Piazza del Campo (Updated)');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Piazza del Campo (Updated)\",\n  \"description\": \"Updated description with historical details.\",\n  \"latitude\": 43.3188,\n  \"longitude\": 11.3308\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{itinerary_id}}/stops/{{created_stop_id}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{itinerary_id}}",
+						"stops",
+						"{{created_stop_id}}"
+					]
+				}
+			}
+		},
+		{
+			"name": "5. Add Stop with Invalid Coordinates (AC04 - 400 Bad Request)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 400 Bad Request', function () {",
+							"    pm.response.to.have.status(400);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "editor-1"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Invalid Coordinates Stop\",\n  \"description\": \"Testing coordinate validation.\",\n  \"latitude\": 95.0,\n  \"longitude\": 11.3308\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{itinerary_id}}/stops",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{itinerary_id}}",
+						"stops"
+					]
+				}
+			}
+		},
+		{
+			"name": "6. Add Stop by Unauthorized Editor (AC05 - 403 Forbidden)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 403 Forbidden', function () {",
+							"    pm.response.to.have.status(403);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Editor-Id",
+						"value": "intruder-editor"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Unauthorized Stop Attempt\",\n  \"description\": \"Should be rejected with 403.\",\n  \"latitude\": 43.3188,\n  \"longitude\": 11.3308\n}"
+				},
+				"url": {
+					"raw": "http://localhost:5207/api/itineraries/{{itinerary_id}}/stops",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5207",
+					"path": [
+						"api",
+						"itineraries",
+						"{{itinerary_id}}",
+						"stops"
+					]
+				}
+			}
+		}
+	]
+}
+

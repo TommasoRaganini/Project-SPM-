@@ -83,7 +83,7 @@ public class Itinerary
 
     /// <summary>
     /// Adds a new fixed stop to the itinerary.
-    /// Only draft itineraries can be modified.
+    /// Only draft itineraries can be modified (governed by the State pattern).
     /// </summary>
     public Result<ItineraryStop> AddStop(
         string? name,
@@ -91,7 +91,7 @@ public class Itinerary
         double latitude,
         double longitude)
     {
-        if (Status != ItineraryStatus.Draft)
+        if (!State.CanEditStops)
             return Result<ItineraryStop>.Failure(
                 "Only draft itineraries can be modified.");
 
@@ -116,7 +116,7 @@ public class Itinerary
 
     /// <summary>
     /// Updates an existing stop belonging to this itinerary.
-    /// Only draft itineraries can be modified.
+    /// Only draft itineraries can be modified (governed by the State pattern).
     /// </summary>
     public Result<ItineraryStop> UpdateStop(
         Guid stopId,
@@ -125,7 +125,7 @@ public class Itinerary
         double latitude,
         double longitude)
     {
-        if (Status != ItineraryStatus.Draft)
+        if (!State.CanEditStops)
             return Result<ItineraryStop>.Failure(
                 "Only draft itineraries can be modified.");
 
