@@ -4,3 +4,9 @@ variables:
   baseUrl: http://localhost:5207
   editorId: editor-us03
   itineraryId: ""
+  stopA: ""
+  detailsA: ""
+  stopB: ""
+  detailsB: ""
+  stopC: ""
+  detailsC: ""
