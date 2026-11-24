@@ -6,37 +6,47 @@ namespace Application.Interfaces;
 
 public interface IItineraryService
 {
-    // US01: Itinerary management
-
+    /// <summary>
+    /// Creates a new draft itinerary associated with the authenticated editor.
+    /// </summary>
     Task<Result<ItineraryResponse>> CreateDraftAsync(
         CreateItineraryRequest request,
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves a draft itinerary by its identifier, verifying editor authorization.
+    /// </summary>
     Task<Result<ItineraryResponse>> GetDraftByIdAsync(
         Guid id,
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Retrieves all published itineraries for the public catalog.
+    /// </summary>
     Task<PublicCatalogResponse> GetPublicCatalogAsync(
         CancellationToken cancellationToken = default);
 
-    // US05: Public itinerary browsing for tourists
+    /// <summary>
+    /// Retrieves the public details of a published itinerary, including ordered stops.
+    /// </summary>
     Task<Result<PublicItineraryDetailResponse>> GetPublishedItineraryByIdAsync(
         Guid id,
         CancellationToken cancellationToken = default);
 
-
-    // New User Story: Itinerary Stops management
-
-    // AC01, AC04, AC05: Add a fixed stop
+    /// <summary>
+    /// Adds a new geolocated fixed stop to an existing draft itinerary.
+    /// </summary>
     Task<Result<ItineraryStopResponse>> AddStopAsync(
         Guid itineraryId,
         CreateItineraryStopRequest request,
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
-    // AC03, AC04, AC05: Update an existing stop
+    /// <summary>
+    /// Updates an existing geolocated fixed stop in a draft itinerary.
+    /// </summary>
     Task<Result<ItineraryStopResponse>> UpdateStopAsync(
         Guid itineraryId,
         Guid stopId,
@@ -44,26 +54,32 @@ public interface IItineraryService
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
-    // AC02: Retrieve all stops belonging to an itinerary
+    /// <summary>
+    /// Retrieves all fixed stops for the specified itinerary.
+    /// </summary>
     Task<Result<IEnumerable<ItineraryStopResponse>>> GetStopsAsync(
         Guid itineraryId,
         CancellationToken cancellationToken = default);
 
-    // US03: Itinerary stop ordering
-
-    // AC01, AC02, AC03, AC05: Replace the order of fixed stops.
+    /// <summary>
+    /// Reorders the fixed stops of a draft itinerary.
+    /// </summary>
     Task<Result<IReadOnlyList<ItineraryStopResponse>>> ReorderStopsAsync(
         Guid itineraryId,
         ReorderItineraryStopsRequest request,
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
-    // AC04: Retrieve segments between consecutive stops.
+    /// <summary>
+    /// Retrieves the consecutive segments formed by the ordered stops.
+    /// </summary>
     Task<Result<IReadOnlyList<ItinerarySegmentResponse>>> GetSegmentsAsync(
         Guid itineraryId,
         CancellationToken cancellationToken = default);
 
-    // US04: Publication of itineraries
+    /// <summary>
+    /// Publishes a draft itinerary once prerequisites are satisfied.
+    /// </summary>
     Task<Result<ItineraryResponse>> PublishItineraryAsync(
         Guid id,
         string authenticatedEditorId,

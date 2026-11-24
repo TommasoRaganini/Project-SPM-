@@ -13,6 +13,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "src\Api\Api.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.Tests", "tests\Domain.Tests\Domain.Tests.csproj", "{5B784D22-569B-44BF-BACC-9AE6FA7144DE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api.IntegrationTests", "tests\Api.IntegrationTests\Api.IntegrationTests.csproj", "{DB780D2E-361C-4991-802B-357C417D3FAE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,8 +89,23 @@ Global
 		{5B784D22-569B-44BF-BACC-9AE6FA7144DE}.Release|x64.Build.0 = Release|Any CPU
 		{5B784D22-569B-44BF-BACC-9AE6FA7144DE}.Release|x86.ActiveCfg = Release|Any CPU
 		{5B784D22-569B-44BF-BACC-9AE6FA7144DE}.Release|x86.Build.0 = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|x64.Build.0 = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Debug|x86.Build.0 = Debug|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|x64.ActiveCfg = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|x64.Build.0 = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|x86.ActiveCfg = Release|Any CPU
+		{DB780D2E-361C-4991-802B-357C417D3FAE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DB780D2E-361C-4991-802B-357C417D3FAE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

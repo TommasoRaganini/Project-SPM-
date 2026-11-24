@@ -12,8 +12,6 @@ public class ApplicationDbContext : DbContext
     }
 
     public DbSet<Itinerary> Itineraries => Set<Itinerary>();
-
-    // New DbSet for itinerary fixed stops
     public DbSet<ItineraryStop> ItineraryStops => Set<ItineraryStop>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -17,7 +17,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US01: Creates a new thematic itinerary in draft status.
+    /// Creates a new thematic itinerary in draft status.
     /// The authenticated editor identity is provided via the 'X-Editor-Id' HTTP header.
     /// </summary>
     [HttpPost]
@@ -35,11 +35,9 @@ public class ItinerariesController : ControllerBase
 
         if (result.IsFailure)
         {
-            // AC04: Reports issues and does not save itinerary
             return BadRequest(new { errors = result.Errors });
         }
 
-        // AC01, AC02, AC03: Returns created draft itinerary
         return CreatedAtAction(
             nameof(GetById),
             new { id = result.Value!.Id },
@@ -48,7 +46,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US01 / AC05: Reopens draft and retrieves previously saved data.
+    /// Retrieves a draft itinerary by its identifier.
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ItineraryResponse), StatusCodes.Status200OK)]
@@ -78,8 +76,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// AC02 & US05: Public catalog of published itineraries (excludes drafts).
-    /// AC05: Returns an understandable message when no published itineraries are available.
+    /// Retrieves the public catalog of published itineraries.
     /// </summary>
     [HttpGet("public-catalog")]
     [ProducesResponseType(typeof(PublicCatalogResponse), StatusCodes.Status200OK)]
@@ -93,8 +90,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US05 / AC03: Opens a published itinerary for tourists, displaying description, ordered stops, and map coordinates.
-    /// AC04: Rejects drafts from public views.
+    /// Retrieves details of a published itinerary and its ordered stops for public viewing.
     /// </summary>
     [HttpGet("public-catalog/{id:guid}")]
     [ProducesResponseType(typeof(PublicItineraryDetailResponse), StatusCodes.Status200OK)]
@@ -115,13 +111,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US04: Publishes a draft itinerary (AC01 - AC06).
-    /// AC01: Requires title, theme, description, and at least two valid fixed stops.
-    /// AC02: Changes status from Draft to Published.
-    /// AC03: Published itinerary appears in public catalog.
-    /// AC04: Fixes stops and their order as saved at publication time.
-    /// AC05: Prevents publication and returns errors if prerequisites are not met.
-    /// AC06: Keeps participation status Closed.
+    /// Publishes a draft itinerary once all prerequisites are satisfied.
     /// </summary>
     [HttpPost("{id:guid}/publish")]
     [ProducesResponseType(typeof(ItineraryResponse), StatusCodes.Status200OK)]
@@ -154,13 +144,8 @@ public class ItinerariesController : ControllerBase
         return Ok(result.Value);
     }
 
-
-
     /// <summary>
-    /// US02: Adds a new geolocated fixed stop to a draft itinerary.
-    /// AC01: Name, description and geographical coordinates are required.
-    /// AC04: Coordinates must be within valid geographical ranges.
-    /// AC05: Only the responsible editor can modify itinerary stops.
+    /// Adds a new geolocated fixed stop to a draft itinerary.
     /// </summary>
     [HttpPost("{id:guid}/stops")]
     [ProducesResponseType(typeof(ItineraryStopResponse), StatusCodes.Status201Created)]
@@ -201,10 +186,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US02: Updates an existing geolocated fixed stop.
-    /// AC03: Changes are saved and returned.
-    /// AC04: Coordinates must be within valid geographical ranges.
-    /// AC05: Only the responsible editor can modify itinerary stops.
+    /// Updates an existing geolocated fixed stop in a draft itinerary.
     /// </summary>
     [HttpPut("{id:guid}/stops/{stopId:guid}")]
     [ProducesResponseType(typeof(ItineraryStopResponse), StatusCodes.Status200OK)]
@@ -247,8 +229,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US02: Retrieves all fixed stops belonging to an itinerary.
-    /// AC02: Returns the itinerary stops for visualization on the map.
+    /// Retrieves all fixed stops belonging to an itinerary.
     /// </summary>
     [HttpGet("{id:guid}/stops")]
     [ProducesResponseType(typeof(IEnumerable<ItineraryStopResponse>), StatusCodes.Status200OK)]
@@ -272,11 +253,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US03: Replaces the order of all fixed stops in a draft itinerary.
-    /// AC01: The responsible editor supplies the complete sequence.
-    /// AC02: The updated order is saved and returned.
-    /// AC03: Duplicate, missing and foreign stops are rejected.
-    /// AC05: Stop details and coordinates are preserved.
+    /// Replaces the order of all fixed stops in a draft itinerary.
     /// </summary>
     [HttpPut("{id:guid}/stops/order")]
     [ProducesResponseType(typeof(IReadOnlyList<ItineraryStopResponse>), StatusCodes.Status200OK)]
@@ -306,8 +283,7 @@ public class ItinerariesController : ControllerBase
     }
 
     /// <summary>
-    /// US03: Retrieves the segments of an itinerary.
-    /// AC04: Each segment connects two consecutive stops in the saved order.
+    /// Retrieves the consecutive segments connecting stops in the saved order.
     /// </summary>
     [HttpGet("{id:guid}/segments")]
     [ProducesResponseType(typeof(IReadOnlyList<ItinerarySegmentResponse>), StatusCodes.Status200OK)]

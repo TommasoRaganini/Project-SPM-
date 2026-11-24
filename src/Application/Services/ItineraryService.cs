@@ -15,16 +15,11 @@ public class ItineraryService : IItineraryService
         _repository = repository;
     }
 
-    // ============================================================
-    // US01: ITINERARY MANAGEMENT
-    // ============================================================
-
     public async Task<Result<ItineraryResponse>> CreateDraftAsync(
         CreateItineraryRequest request,
         string authenticatedEditorId,
         CancellationToken cancellationToken = default)
     {
-        // AC01 & AC04: Domain creation and validation
         var createResult = Itinerary.CreateDraft(
             request.Title,
             request.Theme,
@@ -39,7 +34,6 @@ public class ItineraryService : IItineraryService
 
         var itinerary = createResult.Value!;
 
-        // AC03: Persist itinerary
         await _repository.AddAsync(itinerary, cancellationToken);
         await _repository.SaveChangesAsync(cancellationToken);
 
@@ -52,7 +46,6 @@ public class ItineraryService : IItineraryService
         string authenticatedEditorId,
         CancellationToken cancellationToken = default)
     {
-        // AC05: Retrieve existing itinerary
         var itinerary = await _repository.GetByIdAsync(
             id, cancellationToken);
 
@@ -62,7 +55,6 @@ public class ItineraryService : IItineraryService
                 "Itinerary not found.");
         }
 
-        // Verify editor authorization
         if (itinerary.Status == Domain.States.ItineraryStatus.Draft && !IsAuthorizedEditor(itinerary, authenticatedEditorId))
         {
             return Result<ItineraryResponse>.Failure(
@@ -76,13 +68,11 @@ public class ItineraryService : IItineraryService
     public async Task<PublicCatalogResponse> GetPublicCatalogAsync(
         CancellationToken cancellationToken = default)
     {
-        // AC02: Public catalog excludes drafts
         var list = await _repository.GetPublicCatalogAsync(
             cancellationToken);
 
         var items = list.Select(ItineraryResponse.FromEntity).ToList();
 
-        // US05 AC05: When there are no published itineraries, return an understandable message
         var message = items.Count == 0
             ? "No published itineraries available at this time."
             : null;
@@ -91,8 +81,7 @@ public class ItineraryService : IItineraryService
     }
 
     /// <summary>
-    /// US05 / AC03 & AC04: Retrieves a published itinerary with its ordered stops for tourist visualization.
-    /// Rejects drafts from public views (AC04).
+    /// Retrieves a published itinerary with its ordered stops for public visualization.
     /// </summary>
     public async Task<Result<PublicItineraryDetailResponse>> GetPublishedItineraryByIdAsync(
         Guid id,
@@ -104,7 +93,6 @@ public class ItineraryService : IItineraryService
             return Result<PublicItineraryDetailResponse>.Failure("Itinerary not found.");
         }
 
-        // AC04: Draft itineraries cannot be browsed through the public views
         if (itinerary.Status != Domain.States.ItineraryStatus.Published)
         {
             return Result<PublicItineraryDetailResponse>.Failure(
@@ -115,13 +103,8 @@ public class ItineraryService : IItineraryService
             PublicItineraryDetailResponse.FromEntity(itinerary));
     }
 
-
-    // ============================================================
-    // NEW USER STORY: ITINERARY STOPS MANAGEMENT
-    // ============================================================
-
     /// <summary>
-    /// AC01, AC04, AC05: Adds a new geolocated fixed stop.
+    /// Adds a new geolocated fixed stop to a draft itinerary.
     /// </summary>
     public async Task<Result<ItineraryStopResponse>> AddStopAsync(
         Guid itineraryId,
@@ -129,7 +112,6 @@ public class ItineraryService : IItineraryService
         string authenticatedEditorId,
         CancellationToken cancellationToken = default)
     {
-        // Retrieve itinerary with its stops
         var itinerary = await _repository.GetByIdAsync(
             itineraryId, cancellationToken);
 
@@ -139,14 +121,12 @@ public class ItineraryService : IItineraryService
                 "Itinerary not found.");
         }
 
-        // AC05: Verify editor authorization
         if (!IsAuthorizedEditor(itinerary, authenticatedEditorId))
         {
             return Result<ItineraryStopResponse>.Failure(
                 "You are not authorized to modify this itinerary.");
         }
 
-        // AC01, AC04: Domain creates and validates the stop
         var result = itinerary.AddStop(
             request.Name,
             request.Description,
@@ -159,16 +139,14 @@ public class ItineraryService : IItineraryService
                 result.Errors);
         }
 
-        // Persist the new stop
         await _repository.SaveChangesAsync(cancellationToken);
 
         return Result<ItineraryStopResponse>.Success(
             MapStopToResponse(result.Value!));
     }
 
-
     /// <summary>
-    /// AC03, AC04, AC05: Updates an existing fixed stop.
+    /// Updates an existing fixed stop in a draft itinerary.
     /// </summary>
     public async Task<Result<ItineraryStopResponse>> UpdateStopAsync(
         Guid itineraryId,
@@ -177,7 +155,6 @@ public class ItineraryService : IItineraryService
         string authenticatedEditorId,
         CancellationToken cancellationToken = default)
     {
-        // Retrieve itinerary with its stops
         var itinerary = await _repository.GetByIdAsync(
             itineraryId, cancellationToken);
 
@@ -187,14 +164,12 @@ public class ItineraryService : IItineraryService
                 "Itinerary not found.");
         }
 
-        // AC05: Verify editor authorization
         if (!IsAuthorizedEditor(itinerary, authenticatedEditorId))
         {
             return Result<ItineraryStopResponse>.Failure(
                 "You are not authorized to modify this itinerary.");
         }
 
-        // AC03, AC04: Domain updates and validates the stop
         var result = itinerary.UpdateStop(
             stopId,
             request.Name,
@@ -208,16 +183,14 @@ public class ItineraryService : IItineraryService
                 result.Errors);
         }
 
-        // Persist changes
         await _repository.SaveChangesAsync(cancellationToken);
 
         return Result<ItineraryStopResponse>.Success(
             MapStopToResponse(result.Value!));
     }
 
-
     /// <summary>
-    /// AC02: Retrieves all fixed stops belonging to an itinerary.
+    /// Retrieves all fixed stops belonging to an itinerary.
     /// </summary>
     public async Task<Result<IEnumerable<ItineraryStopResponse>>> GetStopsAsync(
         Guid itineraryId,
@@ -240,13 +213,8 @@ public class ItineraryService : IItineraryService
             stops);
     }
 
-
-    // ============================================================
-    // US03: ITINERARY STOP ORDERING
-    // ============================================================
-
     /// <summary>
-    /// AC01, AC02, AC03, AC05: Validates and saves a new sequence for fixed stops.
+    /// Validates and saves a new sequence for fixed stops in a draft itinerary.
     /// </summary>
     public async Task<Result<IReadOnlyList<ItineraryStopResponse>>> ReorderStopsAsync(
         Guid itineraryId,
@@ -272,7 +240,7 @@ public class ItineraryService : IItineraryService
     }
 
     /// <summary>
-    /// AC04: Derives the itinerary segments from the saved stop order.
+    /// Derives the itinerary segments connecting consecutive stops in saved order.
     /// </summary>
     public async Task<Result<IReadOnlyList<ItinerarySegmentResponse>>> GetSegmentsAsync(
         Guid itineraryId,
@@ -288,13 +256,8 @@ public class ItineraryService : IItineraryService
         return Result<IReadOnlyList<ItinerarySegmentResponse>>.Success(segments);
     }
 
-    // ============================================================
-    // US04: ITINERARY PUBLICATION
-    // ============================================================
-
     /// <summary>
-    /// AC01 - AC06: Validates and publishes a draft itinerary.
-    /// Requires authorization of the responsible editor.
+    /// Validates prerequisites and publishes a draft itinerary.
     /// </summary>
     public async Task<Result<ItineraryResponse>> PublishItineraryAsync(
         Guid id,
@@ -319,13 +282,8 @@ public class ItineraryService : IItineraryService
             ItineraryResponse.FromEntity(itinerary));
     }
 
-    // ============================================================
-    // PRIVATE HELPER METHODS
-    // ============================================================
-
     /// <summary>
-    /// Checks whether the authenticated editor is responsible
-    /// for the requested itinerary.
+    /// Checks whether the authenticated editor matches the responsible editor.
     /// </summary>
     private static bool IsAuthorizedEditor(
         Itinerary itinerary,
@@ -338,9 +296,8 @@ public class ItineraryService : IItineraryService
                 StringComparison.Ordinal);
     }
 
-
     /// <summary>
-    /// Maps an ItineraryStop Domain entity to its Response DTO.
+    /// Maps an ItineraryStop domain entity to its response DTO.
     /// </summary>
     private static ItineraryStopResponse MapStopToResponse(
         ItineraryStop stop)

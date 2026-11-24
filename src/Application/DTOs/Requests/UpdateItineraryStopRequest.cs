@@ -9,4 +9,14 @@ public class UpdateItineraryStopRequest
     public double Latitude { get; set; }
 
     public double Longitude { get; set; }
+
+    public UpdateItineraryStopRequest() { }
+
+    public UpdateItineraryStopRequest(string name, string description, double latitude, double longitude)
+    {
+        Name = name;
+        Description = description;
+        Latitude = latitude;
+        Longitude = longitude;
+    }
 }

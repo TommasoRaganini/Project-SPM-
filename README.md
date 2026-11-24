@@ -30,7 +30,8 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (101 automated tests)
+│   ├── Domain.Tests/           # Unit and service test suite (101 automated tests)
+│   └── Api.IntegrationTests/   # In-memory ASP.NET Core HTTP integration test suite (3 test suites)
 └── Postman/
     ├── Itineraries_US01.postman_collection.json # Postman collection for US01
     ├── Itineraries_US02.postman_collection.json # Postman collection for US02
@@ -70,7 +71,7 @@ Execute the unit and domain tests:
 ```bash
 dotnet test ProjectSPM.sln
 ```
-*All 101 tests will execute and validate the acceptance criteria for US01, US02, US03, US04, and US05.*
+*All 104 tests (101 unit/domain tests + 3 HTTP integration test suites) will execute and validate the system.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:

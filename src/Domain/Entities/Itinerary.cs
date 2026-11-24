@@ -33,7 +33,7 @@ public class Itinerary
     }
 
     /// <summary>
-    /// Creates a new thematic itinerary in draft status (US01 / AC01, AC02, AC03, AC04).
+    /// Creates a new thematic itinerary in draft status.
     /// </summary>
     public static Result<Itinerary> CreateDraft(
         string? title,
@@ -44,8 +44,6 @@ public class Itinerary
     {
         var errors = new List<string>();
 
-        // AC04: If a required field is missing or invalid,
-        // the system reports the issue and does not save.
         if (string.IsNullOrWhiteSpace(title))
             errors.Add("Title is required.");
 
@@ -66,20 +64,15 @@ public class Itinerary
 
         var itinerary = new Itinerary
         {
-            // AC03: System assigns a unique identifier
             Id = Guid.NewGuid(),
             Title = title!.Trim(),
             Theme = theme!.Trim(),
             Description = description!.Trim(),
             GeographicalArea = geographicalArea!.Trim(),
-
-            // AC03: System records the responsible editor
             ResponsibleEditorId = responsibleEditorId!.Trim(),
-
             CreatedAtUtc = DateTime.UtcNow
         };
 
-        // AC02: On creation, the itinerary is assigned Draft status
         itinerary.TransitionTo(new DraftState());
         itinerary.TransitionParticipationTo(new ClosedParticipationState());
 
@@ -153,9 +146,8 @@ public class Itinerary
         _stops.OrderBy(stop => stop.Position).ThenBy(stop => stop.Id);
 
     /// <summary>
-    /// Publishes a draft itinerary (US04 / AC01, AC02, AC04, AC05, AC06).
-    /// Validates mandatory prerequisites: title, theme, description, and at least two valid fixed stops.
-    /// Does not automatically open participation to operators (AC06).
+    /// Publishes a draft itinerary once prerequisites (title, theme, description, and at least two fixed stops) are met.
+    /// Participation remains closed until explicitly opened.
     /// </summary>
     public Result<Itinerary> Publish()
     {
@@ -180,15 +172,14 @@ public class Itinerary
             return Result<Itinerary>.Failure(errors);
 
         TransitionTo(new PublishedState());
-        // AC06: Publication does not automatically open the itinerary to participation by operators.
         TransitionParticipationTo(new ClosedParticipationState());
 
         return Result<Itinerary>.Success(this);
     }
 
     /// <summary>
-    /// Replaces the order of all fixed stops in a draft itinerary (US03 / AC01, AC03, AC05).
-    /// Validates the complete sequence before updating any positions.
+    /// Replaces the order of all fixed stops in a draft itinerary.
+    /// Validates that every existing stop is specified exactly once.
     /// </summary>
     public Result<IReadOnlyList<ItineraryStop>> ReorderStops(IReadOnlyList<Guid> stopIds)
     {

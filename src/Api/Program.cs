@@ -27,7 +27,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "Tourist Itinerary Management System API",
         Version = "v1",
-        Description = "REST API for thematic tourist itinerary management (US01 - US03)"
+        Description = "REST API for thematic tourist itinerary management."
     });
 });
 
@@ -85,3 +85,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }
