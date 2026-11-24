@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Greve in Chianti",
+      "description": "Triangular main piazza with traditional artisan bottegas",
+      "latitude": 43.5833,
+      "longitude": 11.3167
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 4000

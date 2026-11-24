@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/public-catalog"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Shows understandable message when catalog has no published items (AC05)", function () {
+          var items = jsonData.items || [];
+          if (items.length === 0) {
+              pm.expect(jsonData.message).to.eql("No published itineraries available at this time.");
+          }
+      });
+    language: text/javascript
+order: 1000

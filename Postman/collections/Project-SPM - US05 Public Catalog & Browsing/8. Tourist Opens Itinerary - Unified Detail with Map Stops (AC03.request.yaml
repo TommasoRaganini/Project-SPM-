@@ -1,0 +1,26 @@
+$kind: http-request
+name: 8. Tourist Opens Itinerary - Unified Detail with Map Stops (AC03)
+url: "{{baseUrl}}/api/itineraries/public-catalog/{{itineraryId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      var data = pm.response.json();
+      pm.test("Displays description, stops in order and map coordinates (AC03)", function () {
+          pm.expect(data.description).to.not.be.empty;
+          pm.expect(data.stops).to.be.an("array");
+          pm.expect(data.stops.length).to.be.at.least(2);
+          pm.expect(data.stops[0].position).to.eql(1);
+          pm.expect(data.stops[0].name).to.eql("Greve in Chianti");
+          pm.expect(data.stops[0].latitude).to.eql(43.5833);
+          pm.expect(data.stops[0].longitude).to.eql(11.3167);
+          pm.expect(data.stops[1].position).to.eql(2);
+          pm.expect(data.stops[1].name).to.eql("Radda in Chianti");
+          pm.expect(data.stops[1].latitude).to.eql(43.5042);
+          pm.expect(data.stops[1].longitude).to.eql(11.3742);
+      });
+    language: text/javascript
+order: 8000

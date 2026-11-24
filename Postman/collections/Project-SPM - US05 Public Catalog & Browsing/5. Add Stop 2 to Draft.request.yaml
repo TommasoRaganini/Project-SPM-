@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Radda in Chianti",
+      "description": "Historic fortified hilltop medieval town",
+      "latitude": 43.5042,
+      "longitude": 11.3742
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 5000
