@@ -3,8 +3,7 @@ using Domain.Entities;
 namespace Application.DTOs.Responses;
 
 /// <summary>
-/// Unified response model for a tourist opening a published itinerary (US05 / AC03).
-/// Aggregates descriptive metadata and ordered geolocated fixed stops for map display.
+/// Detailed response model for viewing a published itinerary and its ordered stops.
 /// </summary>
 public record PublicItineraryDetailResponse(
     Guid Id,

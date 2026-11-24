@@ -42,7 +42,6 @@ public class ItineraryRepository : IItineraryRepository
     public async Task<IReadOnlyList<Itinerary>> GetPublicCatalogAsync(
         CancellationToken cancellationToken = default)
     {
-        // AC02: Public catalog only includes published itineraries
         var items = await _context.Itineraries
             .AsNoTracking()
             .Where(i => i.Status == ItineraryStatus.Published)
