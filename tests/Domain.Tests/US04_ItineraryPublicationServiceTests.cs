@@ -54,7 +54,7 @@ public class US04_ItineraryPublicationServiceTests
 
         // AC03: Check public catalog
         var publicCatalog = await service.GetPublicCatalogAsync();
-        publicCatalog.Should().ContainSingle(i => i.Id == itinerary.Id);
+        publicCatalog.Items.Should().ContainSingle(i => i.Id == itinerary.Id);
     }
 
     [Fact]

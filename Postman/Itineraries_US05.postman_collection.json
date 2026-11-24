@@ -1,0 +1,266 @@
+{
+  "info": {
+    "name": "Project-SPM - US05 Public Catalog & Browsing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5207"
+    },
+    {
+      "key": "editorId",
+      "value": "editor-us05"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Browse Public Catalog - Empty Message (AC05)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/public-catalog"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Shows understandable message when catalog has no published items (AC05)\", function () {",
+              "    var items = jsonData.items || [];",
+              "    if (items.length === 0) {",
+              "        pm.expect(jsonData.message).to.eql(\"No published itineraries available at this time.\");",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Create Draft Itinerary (Setup)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Chianti Wine & Hills Tour\",\n  \"theme\": \"Food & Wine\",\n  \"description\": \"Scenic route connecting historical Tuscan wineries and stone villages.\",\n  \"geographicalArea\": \"Chianti, Tuscany, Italy\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.collectionVariables.set(\"itineraryId\", jsonData.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Attempt to Open Draft via Public Catalog (AC04)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/public-catalog/{{itineraryId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 404 Not Found (AC04: Drafts cannot be browsed publicly)\", function () {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Add Stop 1 to Draft",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Greve in Chianti\",\n  \"description\": \"Triangular main piazza with traditional artisan bottegas\",\n  \"latitude\": 43.5833,\n  \"longitude\": 11.3167\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Add Stop 2 to Draft",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Radda in Chianti\",\n  \"description\": \"Historic fortified hilltop medieval town\",\n  \"latitude\": 43.5042,\n  \"longitude\": 11.3742\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 201 Created\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Publish Itinerary",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Editor-Id",
+            "value": "{{editorId}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Browse Public Catalog Without Authentication (AC01, AC02)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/public-catalog"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "var targetId = pm.collectionVariables.get(\"itineraryId\");",
+              "var items = jsonData.items || jsonData;",
+              "var found = items.find(i => i.id === targetId);",
+              "pm.test(\"Published itinerary appears in public catalog (AC01)\", function () {",
+              "    pm.expect(found).to.not.be.undefined;",
+              "});",
+              "pm.test(\"Itinerary presents title, theme, and description (AC02)\", function () {",
+              "    pm.expect(found.title).to.eql(\"Chianti Wine & Hills Tour\");",
+              "    pm.expect(found.theme).to.eql(\"Food & Wine\");",
+              "    pm.expect(found.description).to.not.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Tourist Opens Itinerary - Unified Detail with Map Stops (AC03)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/itineraries/public-catalog/{{itineraryId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status code is 200 OK\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var data = pm.response.json();",
+              "pm.test(\"Displays description, stops in order and map coordinates (AC03)\", function () {",
+              "    pm.expect(data.description).to.not.be.empty;",
+              "    pm.expect(data.stops).to.be.an(\"array\");",
+              "    pm.expect(data.stops.length).to.be.at.least(2);",
+              "    pm.expect(data.stops[0].position).to.eql(1);",
+              "    pm.expect(data.stops[0].name).to.eql(\"Greve in Chianti\");",
+              "    pm.expect(data.stops[0].latitude).to.eql(43.5833);",
+              "    pm.expect(data.stops[0].longitude).to.eql(11.3167);",
+              "    pm.expect(data.stops[1].position).to.eql(2);",
+              "    pm.expect(data.stops[1].name).to.eql(\"Radda in Chianti\");",
+              "    pm.expect(data.stops[1].latitude).to.eql(43.5042);",
+              "    pm.expect(data.stops[1].longitude).to.eql(11.3742);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+

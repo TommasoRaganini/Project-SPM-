@@ -30,12 +30,13 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (95 automated tests)
+│   └── Domain.Tests/           # Unit and integration test suite (101 automated tests)
 └── Postman/
     ├── Itineraries_US01.postman_collection.json # Postman collection for US01
     ├── Itineraries_US02.postman_collection.json # Postman collection for US02
     ├── Itineraries_US03.postman_collection.json # Postman collection for US03
-    └── Itineraries_US04.postman_collection.json # Postman collection for US04
+    ├── Itineraries_US04.postman_collection.json # Postman collection for US04
+    └── Itineraries_US05.postman_collection.json # Postman collection for US05
 ```
 
 ### Key Patterns Applied
@@ -69,7 +70,7 @@ Execute the unit and domain tests:
 ```bash
 dotnet test ProjectSPM.sln
 ```
-*All 95 tests will execute and validate the acceptance criteria for US01, US02, US03, and US04.*
+*All 101 tests will execute and validate the acceptance criteria for US01, US02, US03, US04, and US05.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:
@@ -117,6 +118,13 @@ Collections located in the `Postman/` directory:
   8. **Browse Public Catalog as Tourist**: Verifies published route is listed in public catalog without auth (verifies AC03).
   9. **Read Stops in Saved Order**: Verifies stops retain their publication sequence (verifies AC04).
   10. **Prevent Modification**: Verifies editing stops on published itineraries is blocked with `400 Bad Request` (verifies AC04).
+- **`Itineraries_US05.postman_collection.json`**:
+  1. **Empty Catalog Message**: Verifies an understandable message is displayed when no itineraries are published (verifies AC05).
+  2. **Create Draft Itinerary**: Creates a draft route for setup.
+  3. **Attempt to Open Draft via Public View**: Verifies drafts cannot be accessed through public views, returns `404 Not Found` (verifies AC04).
+  4. **Add Stops and Publish**: Populates draft with fixed stops and publishes it.
+  5. **Browse Public Catalog Without Auth**: Lists published itineraries with title, theme, and description without authentication (verifies AC01, AC02).
+  6. **Open Unified Itinerary Detail**: Tourist opens published itinerary receiving description, ordered stops, and map coordinates in a single call (verifies AC03).
 
 ---
 
@@ -166,3 +174,14 @@ Collections located in the `Postman/` directory:
 | **AC04** | The tourist sees exactly the fixed stops and their order as saved at the time of publication. | Fixed stop positions and order are preserved; modifying stops on published itineraries is prevented by the State pattern (`CanEditStops = false`). |
 | **AC05** | The system prevents publication and shows shortcomings if prerequisites are not met. | Returns descriptive domain errors and `400 Bad Request` without updating DB; unauthorized editors receive `403 Forbidden`. |
 | **AC06** | Publication does not automatically open the itinerary to participation by operators. | Itinerary's `ParticipationStatus` remains `ParticipationStatus.Closed` upon publication, ready for US06. |
+
+### US05: Browse Published Thematic Itineraries
+> *As a tourist, I want to browse the published thematic itineraries, so that I can find visit routes consistent with my interests.*
+
+| Criterion | Description | Implementation Details |
+|---|---|---|
+| **AC01** | The tourist can view the list of itineraries in Published status without authenticating. | `GET /api/itineraries/public-catalog` returns published itineraries without requiring authentication headers. |
+| **AC02** | For each itinerary, at least title, theme and a short description are shown. | `ItineraryResponse` within `PublicCatalogResponse.Items` presents title, theme, and description. |
+| **AC03** | When opening an itinerary, the tourist sees description, fixed stops in order, and map positions. | `GET /api/itineraries/public-catalog/{id}` returns unified `PublicItineraryDetailResponse` with metadata and ordered stops with coordinates. |
+| **AC04** | Itineraries in Draft status do not appear in the list and cannot be browsed through public views. | `PublishedState` filters drafts out of catalog; public view endpoint rejects drafts with `404 Not Found`. |
+| **AC05** | When there are no published itineraries, system shows an understandable message instead of an empty list without explanation. | `PublicCatalogResponse.Message` returns `"No published itineraries available at this time."` when items count is 0. |

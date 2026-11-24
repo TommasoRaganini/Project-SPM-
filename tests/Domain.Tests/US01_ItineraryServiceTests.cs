@@ -93,7 +93,7 @@ public class US01_ItineraryServiceTests
         var publicCatalog = await service.GetPublicCatalogAsync();
 
         // Assert (AC02: Does not appear in the public catalog)
-        publicCatalog.Should().BeEmpty();
+        publicCatalog.Items.Should().BeEmpty();
     }
 
     [Fact]

@@ -73,14 +73,46 @@ public class ItineraryService : IItineraryService
             ItineraryResponse.FromEntity(itinerary));
     }
 
-    public async Task<IReadOnlyList<ItineraryResponse>> GetPublicCatalogAsync(
+    public async Task<PublicCatalogResponse> GetPublicCatalogAsync(
         CancellationToken cancellationToken = default)
     {
         // AC02: Public catalog excludes drafts
         var list = await _repository.GetPublicCatalogAsync(
             cancellationToken);
 
-        return list.Select(ItineraryResponse.FromEntity).ToList();
+        var items = list.Select(ItineraryResponse.FromEntity).ToList();
+
+        // US05 AC05: When there are no published itineraries, return an understandable message
+        var message = items.Count == 0
+            ? "No published itineraries available at this time."
+            : null;
+
+        return new PublicCatalogResponse(items, message);
+    }
+
+    /// <summary>
+    /// US05 / AC03 & AC04: Retrieves a published itinerary with its ordered stops for tourist visualization.
+    /// Rejects drafts from public views (AC04).
+    /// </summary>
+    public async Task<Result<PublicItineraryDetailResponse>> GetPublishedItineraryByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var itinerary = await _repository.GetByIdAsync(id, cancellationToken);
+        if (itinerary == null)
+        {
+            return Result<PublicItineraryDetailResponse>.Failure("Itinerary not found.");
+        }
+
+        // AC04: Draft itineraries cannot be browsed through the public views
+        if (itinerary.Status != Domain.States.ItineraryStatus.Published)
+        {
+            return Result<PublicItineraryDetailResponse>.Failure(
+                "Itinerary is not published.");
+        }
+
+        return Result<PublicItineraryDetailResponse>.Success(
+            PublicItineraryDetailResponse.FromEntity(itinerary));
     }
 
 
