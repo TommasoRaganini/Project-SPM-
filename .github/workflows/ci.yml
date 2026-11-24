@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET 8 + Postgres)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: itineraries_test_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore ProjectSPM.sln
+
+      - name: Build solution (Release)
+        run: dotnet build ProjectSPM.sln --configuration Release --no-restore
+
+      - name: Run Domain Unit Tests
+        run: dotnet test tests/Domain.Tests/Domain.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Run API Integration Tests (PostgreSQL)
+        run: dotnet test tests/Api.IntegrationTests/Api.IntegrationTests.csproj --configuration Release --no-build --verbosity normal
+
