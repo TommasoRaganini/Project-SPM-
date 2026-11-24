@@ -18,7 +18,12 @@ public interface IItineraryService
         string authenticatedEditorId,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<ItineraryResponse>> GetPublicCatalogAsync(
+    Task<PublicCatalogResponse> GetPublicCatalogAsync(
+        CancellationToken cancellationToken = default);
+
+    // US05: Public itinerary browsing for tourists
+    Task<Result<PublicItineraryDetailResponse>> GetPublishedItineraryByIdAsync(
+        Guid id,
         CancellationToken cancellationToken = default);
 
 

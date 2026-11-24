@@ -79,9 +79,10 @@ public class ItinerariesController : ControllerBase
 
     /// <summary>
     /// AC02 & US05: Public catalog of published itineraries (excludes drafts).
+    /// AC05: Returns an understandable message when no published itineraries are available.
     /// </summary>
     [HttpGet("public-catalog")]
-    [ProducesResponseType(typeof(IEnumerable<ItineraryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PublicCatalogResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublicCatalog(
         CancellationToken cancellationToken)
     {
@@ -89,6 +90,28 @@ public class ItinerariesController : ControllerBase
             cancellationToken);
 
         return Ok(catalog);
+    }
+
+    /// <summary>
+    /// US05 / AC03: Opens a published itinerary for tourists, displaying description, ordered stops, and map coordinates.
+    /// AC04: Rejects drafts from public views.
+    /// </summary>
+    [HttpGet("public-catalog/{id:guid}")]
+    [ProducesResponseType(typeof(PublicItineraryDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPublishedById(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _itineraryService.GetPublishedItineraryByIdAsync(
+            id, cancellationToken);
+
+        if (result.IsFailure)
+        {
+            return NotFound(new { error = result.Errors.FirstOrDefault() });
+        }
+
+        return Ok(result.Value);
     }
 
     /// <summary>

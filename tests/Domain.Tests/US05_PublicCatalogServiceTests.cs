@@ -31,7 +31,7 @@ public class US05_PublicCatalogServiceTests
         var catalog = await service.GetPublicCatalogAsync(CancellationToken.None);
 
         // Assert: the published itinerary is returned in the public catalog
-        catalog.Should().ContainSingle(item => item.Id == itinerary.Id);
+        catalog.Items.Should().ContainSingle(item => item.Id == itinerary.Id);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class US05_PublicCatalogServiceTests
         var catalog = await service.GetPublicCatalogAsync(CancellationToken.None);
 
         // Assert: title, theme, and description are returned for the itinerary
-        var item = catalog.Should().ContainSingle(i => i.Id == itinerary.Id).Subject;
+        var item = catalog.Items.Should().ContainSingle(i => i.Id == itinerary.Id).Subject;
         item.Title.Should().Be("Sapori della Toscana");
         item.Theme.Should().Be("Enogastronomia");
         item.Description.Should().Be("Percorso tra cantine storiche e borghi medievali");
@@ -85,16 +85,17 @@ public class US05_PublicCatalogServiceTests
 
         await repository.AddAsync(itinerary);
 
-        // Act: open the published itinerary without authentication and retrieve its stops
-        var itineraryResult = await service.GetDraftByIdAsync(itinerary.Id, string.Empty, CancellationToken.None);
-        var stopsResult = await service.GetStopsAsync(itinerary.Id, CancellationToken.None);
+        // Act: tourist opens the published itinerary in public view via unified method (AC03)
+        var result = await service.GetPublishedItineraryByIdAsync(itinerary.Id, CancellationToken.None);
 
-        // Assert: description, stop order, and map coordinates (latitude/longitude) are returned
-        itineraryResult.IsSuccess.Should().BeTrue();
-        itineraryResult.Value!.Description.Should().Be("Percorso tra cantine storiche e borghi medievali");
+        // Assert: unified response returns title, description, and stops in order with map coordinates (latitude/longitude)
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value!.Title.Should().Be("Sapori della Toscana");
+        result.Value.Theme.Should().Be("Enogastronomia");
+        result.Value.Description.Should().Be("Percorso tra cantine storiche e borghi medievali");
 
-        stopsResult.IsSuccess.Should().BeTrue();
-        var stops = stopsResult.Value!.ToList();
+        var stops = result.Value.Stops;
         stops.Should().HaveCount(2);
 
         stops[0].Id.Should().Be(stop2.Id);
@@ -135,23 +136,39 @@ public class US05_PublicCatalogServiceTests
         await repository.AddAsync(draft);
         await repository.AddAsync(published);
 
-        // Act: fetch the public catalog and try to open the draft without authentication
+        // Act: fetch the public catalog and try to open the draft through public view
         var catalog = await service.GetPublicCatalogAsync(CancellationToken.None);
-        var publicAccessResult = await service.GetDraftByIdAsync(draft.Id, string.Empty, CancellationToken.None);
+        var publicAccessResult = await service.GetPublishedItineraryByIdAsync(draft.Id, CancellationToken.None);
+        var editorAccessResult = await service.GetDraftByIdAsync(draft.Id, "editor-alpha", CancellationToken.None);
 
         // Assert: the draft is excluded from the public list and cannot be accessed publicly
-        catalog.Should().NotContain(
+        catalog.Items.Should().NotContain(
             i => i.Id == draft.Id,
             "AC04: Draft itineraries must not appear in the public catalog");
-        catalog.Should().ContainSingle(i => i.Id == published.Id);
+        catalog.Items.Should().ContainSingle(i => i.Id == published.Id);
 
         publicAccessResult.IsFailure.Should().BeTrue(
             "AC04: Draft itineraries cannot be accessed through public views");
-        publicAccessResult.Errors.Should().Contain("You are not authorized to access this itinerary.");
+        publicAccessResult.Errors.Should().Contain("Itinerary is not published.");
+
+        editorAccessResult.IsSuccess.Should().BeTrue(
+            "The responsible editor can still access their draft");
     }
 
     [Fact]
-    public async Task AC05_WhenNoItinerariesArePublished_ShouldReturnEmptyPublicCatalog()
+    public async Task GetPublishedItineraryByIdAsync_WhenNotFound_ShouldReturnFailure()
+    {
+        var repository = new InMemoryItineraryRepository();
+        var service = new ItineraryService(repository);
+
+        var result = await service.GetPublishedItineraryByIdAsync(Guid.NewGuid(), CancellationToken.None);
+
+        result.IsFailure.Should().BeTrue();
+        result.Errors.Should().Contain("Itinerary not found.");
+    }
+
+    [Fact]
+    public async Task AC05_WhenNoItinerariesArePublished_ShouldReturnUnderstandableMessageInsteadOfEmptyListWithoutExplanation()
     {
         // Arrange: repository has only a draft itinerary (none published)
         var repository = new InMemoryItineraryRepository();
@@ -168,7 +185,9 @@ public class US05_PublicCatalogServiceTests
         // Act: fetch the public catalog
         var catalog = await service.GetPublicCatalogAsync(CancellationToken.None);
 
-        // Assert: no itineraries are returned when none have been published
-        catalog.Should().BeEmpty("AC05: No published itineraries exist");
+        // Assert: an understandable message is shown instead of an empty list without explanation (AC05)
+        catalog.Items.Should().BeEmpty("AC05: No published itineraries exist");
+        catalog.Message.Should().NotBeNullOrWhiteSpace("AC05: System must provide an understandable message");
+        catalog.Message.Should().Be("No published itineraries available at this time.");
     }
 }
