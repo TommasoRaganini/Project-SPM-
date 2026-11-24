@@ -91,6 +91,46 @@ public class ItinerariesController : ControllerBase
         return Ok(catalog);
     }
 
+    /// <summary>
+    /// US04: Publishes a draft itinerary (AC01 - AC06).
+    /// AC01: Requires title, theme, description, and at least two valid fixed stops.
+    /// AC02: Changes status from Draft to Published.
+    /// AC03: Published itinerary appears in public catalog.
+    /// AC04: Fixes stops and their order as saved at publication time.
+    /// AC05: Prevents publication and returns errors if prerequisites are not met.
+    /// AC06: Keeps participation status Closed.
+    /// </summary>
+    [HttpPost("{id:guid}/publish")]
+    [ProducesResponseType(typeof(ItineraryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Publish(
+        [FromRoute] Guid id,
+        [FromHeader(Name = "X-Editor-Id")] string? editorId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _itineraryService.PublishItineraryAsync(
+            id,
+            editorId ?? string.Empty,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            var error = result.Errors.FirstOrDefault();
+
+            if (error == "Itinerary not found.")
+                return NotFound(new { error });
+
+            if (error == "You are not authorized to publish this itinerary.")
+                return StatusCode(StatusCodes.Status403Forbidden, new { error });
+
+            return BadRequest(new { errors = result.Errors });
+        }
+
+        return Ok(result.Value);
+    }
+
 
 
     /// <summary>

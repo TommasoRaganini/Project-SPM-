@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Tre Cime di Lavaredo",
+      "description": "Iconic alpine peak panorama",
+      "latitude": 46.6186,
+      "longitude": 12.3028
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 3000

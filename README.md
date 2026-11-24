@@ -30,15 +30,19 @@ ProjectSPM.slnx
 │   └── Api/                    # Presentation layer (ASP.NET Core REST API, Swagger/OpenAPI)
 │       └── Controllers/        # ItinerariesController
 ├── tests/
-│   └── Domain.Tests/           # Unit and integration test suite (76 automated tests)
+│   └── Domain.Tests/           # Unit and integration test suite (95 automated tests)
 └── Postman/
     ├── Itineraries_US01.postman_collection.json # Postman collection for US01
     ├── Itineraries_US02.postman_collection.json # Postman collection for US02
-    └── Itineraries_US03.postman_collection.json # Postman collection for US03
+    ├── Itineraries_US03.postman_collection.json # Postman collection for US03
+    └── Itineraries_US04.postman_collection.json # Postman collection for US04
 ```
 
 ### Key Patterns Applied
-- **State Pattern**: The `Itinerary` aggregate encapsulates its lifecycle state (`Draft`, `Published`, etc.) via `IItineraryState`. In `DraftState`, public catalog visibility is strictly prohibited (`IsVisibleInPublicCatalog = false`), and stops can be edited.
+- **State Pattern**: The `Itinerary` aggregate encapsulates its lifecycle state (`Draft`, `Published`) via `IItineraryState` (`DraftState`, `PublishedState`), and its operator participation state (`Closed`, `Open`) via `IParticipationState` (`ClosedParticipationState`, `OpenParticipationState`) as orthogonal state machines.
+  - In `DraftState`, public catalog visibility is strictly prohibited (`IsVisibleInPublicCatalog = false`), and stops can be edited and reordered (`CanEditStops = true`).
+  - In `PublishedState`, `IsVisibleInPublicCatalog = true`, and stop modifications are prohibited (`CanEditStops = false`).
+  - Upon publication, participation remains `ClosedParticipationState` (`CanAcceptProposals = false`), strictly fulfilling US04 AC06 and preparing the domain for US06.
 - **Result Pattern**: Domain validations and operations return a strongly-typed `Result<T>` containing explicit error messages rather than throwing exceptions for expected business rule violations.
 - **Repository Pattern**: Decouples application logic from data access technologies (Entity Framework Core).
 
@@ -65,7 +69,7 @@ Execute the unit and domain tests:
 ```bash
 dotnet test ProjectSPM.sln
 ```
-*All 76 tests will execute and validate the acceptance criteria for US01, US02, and US03.*
+*All 95 tests will execute and validate the acceptance criteria for US01, US02, US03, and US04.*
 
 ### 3. Launch the Backend API
 Start the ASP.NET Core Web API:
@@ -102,6 +106,17 @@ Collections located in the `Postman/` directory:
   3. **Validation Failure (Duplicate Stop)**: Rejects a repeated stop ID (verifies AC03 and `400 Bad Request`).
   4. **Read Saved Order**: Retrieves the saved sequence and verifies that the rejected request did not change it (verifies AC02, AC03 and AC05).
   5. **Read Consecutive Segments**: Retrieves the segments in the new sequence (verifies AC04).
+- **`Itineraries_US04.postman_collection.json`**:
+  1. **Create Draft Itinerary**: Creates a new draft route.
+  2. **Validation Failure (No Stops)**: Verifies prerequisite check (at least 2 stops required, returns `400 Bad Request`).
+  3. **Add First Stop**: Adds 1 stop.
+  4. **Validation Failure (Single Stop)**: Verifies rejection when only 1 stop is present (verifies AC01, AC05).
+  5. **Add Second Stop**: Reaches the minimum of two valid fixed stops.
+  6. **Unauthorized Editor Publish**: Rejects non-responsible editor with `403 Forbidden` (verifies AC05).
+  7. **Confirm Publication**: Responsible editor publishes itinerary; transitions from `Draft` to `Published`, keeps participation `Closed` (verifies AC01, AC02, AC06).
+  8. **Browse Public Catalog as Tourist**: Verifies published route is listed in public catalog without auth (verifies AC03).
+  9. **Read Stops in Saved Order**: Verifies stops retain their publication sequence (verifies AC04).
+  10. **Prevent Modification**: Verifies editing stops on published itineraries is blocked with `400 Bad Request` (verifies AC04).
 
 ---
 
@@ -139,3 +154,15 @@ Collections located in the `Postman/` directory:
 | **AC03** | The sequence cannot contain duplicates or references to stops outside the itinerary. | Domain validation requires every stop to appear exactly once. Invalid sequences return `400 Bad Request` and preserve the saved order. |
 | **AC04** | Segments are recalculated between consecutive stops. | `GET /api/itineraries/{id}/segments` derives each segment from a pair of consecutive stops in the saved order. |
 | **AC05** | Reordering preserves each stop’s descriptive and geographic data. | The reorder operation updates only `Position`. |
+
+### US04: Publish Thematic Itinerary
+> *As an editor, I want to publish an itinerary while keeping the order of the defined fixed stops, so that tourists can browse the route I designed.*
+
+| Criterion | Description | Implementation Details |
+|---|---|---|
+| **AC01** | Only an itinerary with title, theme, description and at least two valid fixed stops can be published. | `Publish()` enforces non-empty title, theme, description and validates `_stops.Count >= 2`. |
+| **AC02** | When the editor confirms publication, the status changes from `Draft` to `Published`. | State pattern transition via `TransitionTo(new PublishedState())`; `Status` is set to `Published`. |
+| **AC03** | A published itinerary appears in the catalog that tourists can browse. | `PublishedState.IsVisibleInPublicCatalog = true`; included in `GET /api/itineraries/public-catalog`. |
+| **AC04** | The tourist sees exactly the fixed stops and their order as saved at the time of publication. | Fixed stop positions and order are preserved; modifying stops on published itineraries is prevented by the State pattern (`CanEditStops = false`). |
+| **AC05** | The system prevents publication and shows shortcomings if prerequisites are not met. | Returns descriptive domain errors and `400 Bad Request` without updating DB; unauthorized editors receive `403 Forbidden`. |
+| **AC06** | Publication does not automatically open the itinerary to participation by operators. | Itinerary's `ParticipationStatus` remains `ParticipationStatus.Closed` upon publication, ready for US06. |

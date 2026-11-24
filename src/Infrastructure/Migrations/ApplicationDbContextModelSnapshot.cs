@@ -41,6 +41,13 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("ParticipationStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Closed");
+
                     b.Property<string>("ResponsibleEditorId")
                         .IsRequired()
                         .HasMaxLength(100)

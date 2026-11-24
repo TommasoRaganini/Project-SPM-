@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/publish"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 400 Bad Request", function () {
+          pm.response.to.have.status(400);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Reports missing stops prerequisite", function () {
+          pm.expect(jsonData.errors).to.include("An itinerary must have at least two fixed stops to be published.");
+      });
+    language: text/javascript
+order: 2000

@@ -63,7 +63,7 @@ public class ItineraryService : IItineraryService
         }
 
         // Verify editor authorization
-        if (!IsAuthorizedEditor(itinerary, authenticatedEditorId))
+        if (itinerary.Status == Domain.States.ItineraryStatus.Draft && !IsAuthorizedEditor(itinerary, authenticatedEditorId))
         {
             return Result<ItineraryResponse>.Failure(
                 "You are not authorized to access this itinerary.");
@@ -254,6 +254,37 @@ public class ItineraryService : IItineraryService
         var segments = stops.Zip(stops.Skip(1),
             (from, to) => new ItinerarySegmentResponse(from.Id, to.Id)).ToList();
         return Result<IReadOnlyList<ItinerarySegmentResponse>>.Success(segments);
+    }
+
+    // ============================================================
+    // US04: ITINERARY PUBLICATION
+    // ============================================================
+
+    /// <summary>
+    /// AC01 - AC06: Validates and publishes a draft itinerary.
+    /// Requires authorization of the responsible editor.
+    /// </summary>
+    public async Task<Result<ItineraryResponse>> PublishItineraryAsync(
+        Guid id,
+        string authenticatedEditorId,
+        CancellationToken cancellationToken = default)
+    {
+        var itinerary = await _repository.GetByIdAsync(id, cancellationToken);
+        if (itinerary == null)
+            return Result<ItineraryResponse>.Failure("Itinerary not found.");
+
+        if (!IsAuthorizedEditor(itinerary, authenticatedEditorId))
+            return Result<ItineraryResponse>.Failure(
+                "You are not authorized to publish this itinerary.");
+
+        var publishResult = itinerary.Publish();
+        if (publishResult.IsFailure)
+            return Result<ItineraryResponse>.Failure(publishResult.Errors);
+
+        await _repository.SaveChangesAsync(cancellationToken);
+
+        return Result<ItineraryResponse>.Success(
+            ItineraryResponse.FromEntity(itinerary));
     }
 
     // ============================================================

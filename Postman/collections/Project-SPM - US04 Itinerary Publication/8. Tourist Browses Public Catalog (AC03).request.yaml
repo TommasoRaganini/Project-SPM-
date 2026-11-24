@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/public-catalog"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      var list = pm.response.json();
+      var targetId = pm.collectionVariables.get("itineraryId");
+      var found = list.some(item => item.id === targetId);
+      pm.test("Published itinerary is visible in public catalog (AC03)", function () {
+          pm.expect(found).to.be.true;
+      });
+    language: text/javascript
+order: 8000

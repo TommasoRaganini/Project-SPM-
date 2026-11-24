@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Lago di Braies",
+      "description": "Alpine emerald lake",
+      "latitude": 46.6946,
+      "longitude": 12.0854
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+    language: text/javascript
+order: 5000

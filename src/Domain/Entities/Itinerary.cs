@@ -14,9 +14,13 @@ public class Itinerary
     public string ResponsibleEditorId { get; private set; } = string.Empty;
     public DateTime CreatedAtUtc { get; private set; }
     public ItineraryStatus Status { get; private set; }
+    public ParticipationStatus ParticipationStatus { get; private set; } = ParticipationStatus.Closed;
 
     private IItineraryState _state = null!;
     public IItineraryState State => _state ??= CreateState(Status);
+
+    private IParticipationState _participationState = null!;
+    public IParticipationState ParticipationState => _participationState ??= CreateParticipationState(ParticipationStatus);
 
     // Collection of fixed stops belonging to the itinerary
     private readonly List<ItineraryStop> _stops = new();
@@ -77,6 +81,7 @@ public class Itinerary
 
         // AC02: On creation, the itinerary is assigned Draft status
         itinerary.TransitionTo(new DraftState());
+        itinerary.TransitionParticipationTo(new ClosedParticipationState());
 
         return Result<Itinerary>.Success(itinerary);
     }
@@ -148,6 +153,40 @@ public class Itinerary
         _stops.OrderBy(stop => stop.Position).ThenBy(stop => stop.Id);
 
     /// <summary>
+    /// Publishes a draft itinerary (US04 / AC01, AC02, AC04, AC05, AC06).
+    /// Validates mandatory prerequisites: title, theme, description, and at least two valid fixed stops.
+    /// Does not automatically open participation to operators (AC06).
+    /// </summary>
+    public Result<Itinerary> Publish()
+    {
+        var errors = new List<string>();
+
+        if (Status != ItineraryStatus.Draft)
+            errors.Add("Only draft itineraries can be published.");
+
+        if (string.IsNullOrWhiteSpace(Title))
+            errors.Add("Title is required.");
+
+        if (string.IsNullOrWhiteSpace(Theme))
+            errors.Add("Theme is required.");
+
+        if (string.IsNullOrWhiteSpace(Description))
+            errors.Add("Description is required.");
+
+        if (_stops.Count < 2)
+            errors.Add("An itinerary must have at least two fixed stops to be published.");
+
+        if (errors.Count > 0)
+            return Result<Itinerary>.Failure(errors);
+
+        TransitionTo(new PublishedState());
+        // AC06: Publication does not automatically open the itinerary to participation by operators.
+        TransitionParticipationTo(new ClosedParticipationState());
+
+        return Result<Itinerary>.Success(this);
+    }
+
+    /// <summary>
     /// Replaces the order of all fixed stops in a draft itinerary (US03 / AC01, AC03, AC05).
     /// Validates the complete sequence before updating any positions.
     /// </summary>
@@ -179,9 +218,16 @@ public class Itinerary
         Status = newState.Status;
     }
 
+    public void TransitionParticipationTo(IParticipationState newState)
+    {
+        _participationState = newState ?? throw new ArgumentNullException(nameof(newState));
+        ParticipationStatus = newState.Status;
+    }
+
     public void RestoreState()
     {
         _state = CreateState(Status);
+        _participationState = CreateParticipationState(ParticipationStatus);
     }
 
     private static IItineraryState CreateState(ItineraryStatus status) => status switch
@@ -189,5 +235,12 @@ public class Itinerary
         ItineraryStatus.Draft => new DraftState(),
         ItineraryStatus.Published => new PublishedState(),
         _ => new DraftState()
+    };
+
+    private static IParticipationState CreateParticipationState(ParticipationStatus status) => status switch
+    {
+        ParticipationStatus.Closed => new ClosedParticipationState(),
+        ParticipationStatus.Open => new OpenParticipationState(),
+        _ => new ClosedParticipationState()
     };
 }

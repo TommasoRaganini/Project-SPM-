@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 OK", function () {
+          pm.response.to.have.status(200);
+      });
+      var stops = pm.response.json();
+      pm.test("Returns preserved stops in order (AC04)", function () {
+          pm.expect(stops.length).to.be.at.least(2);
+          pm.expect(stops[0].name).to.eql("Tre Cime di Lavaredo");
+          pm.expect(stops[0].position).to.eql(1);
+          pm.expect(stops[1].name).to.eql("Lago di Braies");
+          pm.expect(stops[1].position).to.eql(2);
+      });
+    language: text/javascript
+order: 9000

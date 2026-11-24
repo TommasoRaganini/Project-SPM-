@@ -41,8 +41,15 @@ public class ItineraryConfiguration : IEntityTypeConfiguration<Itinerary>
             .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(x => x.ParticipationStatus)
+            .HasConversion<string>()
+            .HasMaxLength(50)
+            .IsRequired()
+            .HasDefaultValue(Domain.States.ParticipationStatus.Closed);
+
         // State Pattern is managed in-memory
         builder.Ignore(x => x.State);
+        builder.Ignore(x => x.ParticipationState);
 
         // One-to-Many relationship:
         // One itinerary can have multiple fixed stops

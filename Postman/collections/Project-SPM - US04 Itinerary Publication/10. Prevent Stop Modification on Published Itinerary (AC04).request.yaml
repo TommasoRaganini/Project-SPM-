@@ -1,0 +1,27 @@
+$kind: http-request
+url: "{{baseUrl}}/api/itineraries/{{itineraryId}}/stops"
+method: POST
+headers:
+  X-Editor-Id: "{{editorId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Sassolungo",
+      "description": "Third stop attempted after publish",
+      "latitude": 46.5292,
+      "longitude": 11.7397
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 400 Bad Request", function () {
+          pm.response.to.have.status(400);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Modifying published itinerary stops is prohibited", function () {
+          pm.expect(jsonData.errors).to.include("Only draft itineraries can be modified.");
+      });
+    language: text/javascript
+order: 10000
